@@ -10,10 +10,11 @@ class Device:
     def sendData(self, destAddr, identNo, data):
         packet = [self.ipAddress, destAddr, identNo, data]
         for host in self.torNetwork.serverList + self.torNetwork.computerList:
-            print(destAddr, host.ipAddress)
             if destAddr == host.ipAddress:
                 host.buffer.append(packet)
-                print('b')
-            return
+                break
+
+    def __str__(self):
+        return self.ipAddress
 
 

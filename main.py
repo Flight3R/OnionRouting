@@ -22,7 +22,8 @@ torNetwork.serverList.append(srv4)
 torNetwork.serverList.append(srv5)
 torNetwork.serverList.append(srv6)
 
-pc1.createData("4.3.2.1", 123456, "mam-nadzieje-ze-dziala")
+pc1.onionMessage("4.3.2.1", 123456, "mam/nadzieje/ze/dziala")
+
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.bufferCheck()
