@@ -14,8 +14,17 @@ srv2 = Server.Server("22.22.22.22", torNetwork, [])
 srv3 = Server.Server("33.33.33.33", torNetwork, [])
 srv4 = Server.Server("44.44.44.44", torNetwork, [])
 srv5 = Server.Server("55.55.55.55", torNetwork, [])
-srv6 = Server.Server("55.55.55.55", torNetwork, [])
+srv6 = Server.Server("66.66.66.66", torNetwork, [])
 
+torNetwork.serverList.append(srv1)
+torNetwork.serverList.append(srv2)
+torNetwork.serverList.append(srv3)
+torNetwork.serverList.append(srv4)
+torNetwork.serverList.append(srv5)
+torNetwork.serverList.append(srv6)
 
-print(torNetwork.serverList[5].ipAddress)
-print(torNetwork.serverList[4].ipAddress)
+pc1.onionMessage("4.3.2.1", 123456, "mam/nadzieje/ze/dziala")
+
+for i in range(10):
+    for host in torNetwork.serverList + torNetwork.computerList:
+        host.bufferCheck()
