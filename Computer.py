@@ -1,10 +1,14 @@
-import Device, Connection, random
+import Connection
+import Device
+import random
+
+
 class Computer(Device.Device):
     def __init__(self, ipAddress = None, torNetwork = None, publicKey = None, privateKey = None):
         super().__init__(ipAddress, torNetwork, publicKey, privateKey)
         torNetwork.computerList.append(self)
 
-    def onionMessage(self, destAddr, identNo, message):
+    def onion_message(self, destAddr, identNo, message):
         serverAmount = random.randint(3, len(self.torNetwork.serverList))
         serverOrder = random.sample(self.torNetwork.serverList, serverAmount)
         message = destAddr + "-" + message
@@ -16,10 +20,10 @@ class Computer(Device.Device):
         # now encrypt message with first server's publicKey
         print(self, "to:", destAddr, "\tvia:", serverOrder[0].ipAddress, "\tsent:", message)
         self.connectionList.append(Connection.Connection(None, None, identNo, destAddr))
-        self.sendData(serverOrder[0].ipAddress, identNo, message)
+        self.send_data(serverOrder[0].ipAddress, identNo, message)
 
-    def bufferCheck(self):
-        while (len(self.buffer) != 0):
+    def buffer_check(self):
+        while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
 
             try:
@@ -32,7 +36,7 @@ class Computer(Device.Device):
             except StopIteration:
                 # answer to message
                 print("at:", self, "message from:", packet[0], "\tmessage:", packet[3], "\tresponding...")
-                self.sendData(packet[0], packet[2], packet[3]+"/la/respuesta/por/tu/puta/madre")
+                self.send_data(packet[0], packet[2], packet[3]+"/la/respuesta/por/tu/puta/madre")
 
 
 # packet = [srcAddr, dstAddr, identNo, "S{dst2-'S2{dst3-plaintextdata}'}"]
