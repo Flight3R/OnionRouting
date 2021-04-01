@@ -1,8 +1,8 @@
-import Link
 class Connection:
-    def __init__(self, identNo = None, sourceAddr = None, destAddr = None):
-        self.identNo = identNo
+    def __init__(self, sourceAddr, sourceIdentNo, destIdentNo, destAddr):
         self.sourceAddr = sourceAddr
+        self.sourceIdentNo = sourceIdentNo
+        self.destIdentNo = destIdentNo
         self.destAddr = destAddr
 
 
