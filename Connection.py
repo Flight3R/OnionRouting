@@ -1,13 +1,8 @@
 import Link
 class Connection:
-    def __init__(self, identNo = None, sourceLink = None, destLink = None):
+    def __init__(self, identNo = None, sourceAddr = None, destAddr = None):
         self.identNo = identNo
-        self.sourceLink = sourceLink
-        self.destLink = destLink
+        self.sourceAddr = sourceAddr
+        self.destAddr = destAddr
 
 
-    def addConnection(self):
-        print("nic")
-
-    def removeConnection(self):
-        print("nic")
