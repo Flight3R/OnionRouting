@@ -22,14 +22,15 @@ class Computer(Device.Device):
             packet = self.buffer.pop(0)
 
             try:
-                connection = next(con for con in self.connectionList if con.destIdentNo == packet[2])
+
+                connection = next(filter(lambda x: x.destIdentNo == packet[2], self.connectionList))
                 # already existing connection (data to decrypt)
                 message = packet[3] # decrypt with self.privateKey
                 print("at:", self, "response from:", connection.destAddr, "\tmessage:", message)
                 self.connectionList.remove(connection)
             except StopIteration:
                 # answer to message
-                print("at:", self, "answer from:", packet[0], "\tmessage:", packet[3], "\tresponding...")
+                print("at:", self, "message from:", packet[0], "\tmessage:", packet[3], "\tresponding...")
                 self.sendData(packet[0], packet[2], packet[3]+"/la/respuesta/por/tu/puta/madre")
 
 

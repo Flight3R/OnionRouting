@@ -8,7 +8,7 @@ class Server(Device.Device):
             packet = self.buffer.pop(0)
 
             try:
-                connection = next(con for con in self.connectionList if con.destIdentNo == packet[2])
+                connection = next(filter(lambda x: x.destIdentNo == packet[2], self.connectionList))
                 # already existing connection (data to decrypt and encrypt)
                 data = packet[3]  # decrypt with self.privateKey and encrypt with connection.sourceAddr.publicKey
                 print("at:", self, "e/c from:", packet[0], "\tto:", connection.sourceAddr, "\tdata:", data)
