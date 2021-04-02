@@ -1,9 +1,10 @@
-import Device, Connection
+import Connection
+import Device
 
 
 class Server(Device.Device):
-    def __init__(self, ipAddress = None, torNetwork = None, publicKey = None, privateKey = None):
-        super().__init__(ipAddress, torNetwork, publicKey, privateKey)
+    def __init__(self, name=None, ipAddress=None, torNetwork=None, publicKey=None, privateKey=None):
+        super().__init__(name, ipAddress, torNetwork, publicKey, privateKey)
 
     def buffer_check(self):
         while len(self.buffer) != 0:
