@@ -1,10 +1,12 @@
 import Connection
 import Device
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 
 
 class Server(Device.Device):
-    def __init__(self, name=None, ipAddress=None, torNetwork=None, publicKey=None, privateKey=None):
-        super().__init__(name, ipAddress, torNetwork, publicKey, privateKey)
+    def __init__(self, name=None, ipAddress=None, torNetwork=None):
+        super().__init__(name, ipAddress, torNetwork)
 
     def buffer_check(self):
         while len(self.buffer) != 0:
@@ -13,13 +15,41 @@ class Server(Device.Device):
             try:
                 connection = next(filter(lambda x: x.destIdentNo == packet[2], self.connectionList))
                 # already existing connection (data to decrypt and encrypt)
-                data = packet[3]  # decrypt with self.privateKey and encrypt with connection.sourceAddr.publicKey
+                #data = packet[3]  # decrypt with self.privateKey and encrypt with connection.sourceAddr.publicKey
+                encryptedBytes = packet[3].encode()
+                bytes = self.privateKey.decrypt(
+                    encryptedBytes,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+                encryptedBytes = connection.sourceAddr.publicKey.encrypt(
+                    bytes,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+                data = str(encryptedBytes)
                 print("at:", self, "e/c from:", packet[0], "\tto:", connection.sourceAddr, "\tdata:", data)
                 self.send_data(connection.sourceAddr, connection.sourceIdentNo, data)
                 self.connectionList.remove(connection)
             except StopIteration:
                 # new connection (data to decrypt)
-                data = packet[3].split("-")  # decrypt packet[3] with self.privateKey before split
+                encryptedBytes = packet[3].encode()
+                bytes = self.privateKey.decrypt(
+                    encryptedBytes,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+                data = str(bytes)
+                data = data.split("-")  # decrypt packet[3] with self.privateKey before split
                 print("at:", self, "n/c from:", packet[0], "\tto:", data[1], "\tdata:", "-".join(data[1:]))
                 newIdent = packet[2]  # can be random
                 self.connectionList.append(Connection.Connection(packet[0], packet[2], newIdent, data[0]))

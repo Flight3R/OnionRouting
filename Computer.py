@@ -1,23 +1,49 @@
 import Connection
 import Device
 import random
-
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 
 class Computer(Device.Device):
-    def __init__(self, name=None, ipAddress=None, torNetwork=None, publicKey=None, privateKey=None):
-        super().__init__(name, ipAddress, torNetwork, publicKey, privateKey)
+    def __init__(self, name=None, ipAddress=None, torNetwork=None):
+        super().__init__(name, ipAddress, torNetwork)
         torNetwork.computerList.append(self)
 
     def onion_message(self, destAddr, identNo, message):
-        # serverAmount = random.randint(3, len(self.torNetwork.serverList))  ta linijka jest chyba zbędna, zawsze powinien losować 3 serwery, a nie od 3 do tylu ile jest w sieci
         serverOrder = random.sample(self.torNetwork.serverList, 3)
         message = destAddr + "-" + message
 
         for server in serverOrder[::-1][:-1]:
             # now encrypt message with server.publicKey
-            message = "-".join([server.ipAddress, message])
+            #print("msgtype:", type(message))
+            bytes = message.encode()
+            print('b:', bytes)
+            #print("type:", type(bytes))
+            encryptedBytes = server.publicKey.encrypt(
+                bytes,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+            print("e/b:", encryptedBytes)
+            message = str(encryptedBytes)
+            #print("m:", message)
+            #message = "-".join([server.ipAddress, message])
+            #print("j/m:", message)
 
         # now encrypt message with first server's publicKey
+        bytes = message.encode()
+        encryptedBytes = serverOrder[0].publicKey.encrypt(
+            bytes,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        message = str(encryptedBytes)
         print(self, "to:", destAddr, "\tvia:", serverOrder[0].ipAddress, "\tsent:", message)
         self.connectionList.append(Connection.Connection(None, None, identNo, destAddr))
         self.send_data(serverOrder[0].ipAddress, identNo, message)
@@ -27,10 +53,19 @@ class Computer(Device.Device):
             packet = self.buffer.pop(0)
 
             try:
-
                 connection = next(filter(lambda x: x.destIdentNo == packet[2], self.connectionList))
                 # already existing connection (data to decrypt)
-                message = packet[3]  # decrypt with self.privateKey
+                encryptedBytes = packet[3].encode()
+                bytes = self.privateKey.decrypt(
+                    encryptedBytes,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+                message = str(bytes)
+                #message = packet[3]  # decrypt with self.privateKey
                 print("at:", self, "response from:", connection.destAddr, "\tmessage:", message)
                 self.connectionList.remove(connection)
             except StopIteration:

@@ -2,7 +2,7 @@ from os import getcwd, path
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-
+from glob import glob
 
 def generate_private(device_name=""):
     # generate private key
@@ -53,12 +53,20 @@ def test_address(testAddress="", testNetwork=None):
 
 
 class Device:
-    def __init__(self, name=None, ipAddress=None, torNetwork=None, publicKey=None, privateKey=None):
+    def __init__(self, name=None, ipAddress=None, torNetwork=None):
         self.name = name
         self.ipAddress = test_address(ipAddress, torNetwork)
         self.torNetwork = torNetwork
-        self.privateKey = generate_private(name)
-        self.publicKey = generate_public(name, self.privateKey)
+
+        try:
+            self.privateKey = open(glob("keys/"+self.name+"_private_key.txt")[0], "r").read()
+        except IndexError:
+            self.privateKey = generate_private(name)
+        try:
+            self.publicKey = open(glob("keys/"+self.name+"_public_key.txt")[0], "r").read()
+        except IndexError:
+            self.publicKey = generate_public(name, self.privateKey)
+
         self.connectionList = []
         self.buffer = []
 
