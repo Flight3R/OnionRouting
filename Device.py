@@ -4,6 +4,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from glob import glob
 
+
+
 def generate_private(device_name=""):
     # generate private key
     private_key = rsa.generate_private_key(
@@ -59,16 +61,31 @@ class Device:
         self.torNetwork = torNetwork
 
         try:
-            self.privateKey = open(glob("keys/"+self.name+"_private_key.txt")[0], "r").read()
-        except IndexError:
+            self.load_private_key()
+        except Exception:
             self.privateKey = generate_private(name)
         try:
-            self.publicKey = open(glob("keys/"+self.name+"_public_key.txt")[0], "r").read()
-        except IndexError:
+            self.load_public_key()
+        except Exception:
             self.publicKey = generate_public(name, self.privateKey)
 
         self.connectionList = []
         self.buffer = []
+
+    def load_private_key(self):
+        with open("keys/" + self.name + "_private_key.txt", "rb") as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(),
+                password=None,
+                backend=default_backend()
+            )
+
+    def load_public_key(self):
+        with open("keys/" + self.name + "_public_key.txt", "rb") as key_file:
+            public_key = serialization.load_pem_public_key(
+                key_file.read(),
+                backend=default_backend()
+            )
 
     def send_data(self, destAddr, identNo, data):
         packet = [self.ipAddress, destAddr, identNo, data]

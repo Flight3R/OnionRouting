@@ -4,9 +4,11 @@ import time  # from time import sleep
 import Computer
 import Server
 import TorNetwork
-from glob import glob
-if(not os.path.exists(os.path.join(os.getcwd(), 'keys'))):
+
+try:
     os.mkdir('keys')
+except FileExistsError:
+    pass
 
 time.sleep(5)
 torNetwork = TorNetwork.TorNetwork([], [])
@@ -35,5 +37,5 @@ for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 # '''
-time.sleep(5)
-shutil.rmtree('keys')
+#time.sleep(5)
+#shutil.rmtree('keys')

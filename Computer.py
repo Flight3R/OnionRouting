@@ -15,10 +15,7 @@ class Computer(Device.Device):
 
         for server in serverOrder[::-1][:-1]:
             # now encrypt message with server.publicKey
-            #print("msgtype:", type(message))
-            bytes = message.encode()
-            print('b:', bytes)
-            #print("type:", type(bytes))
+            bytes = message.encode("utf-8")
             encryptedBytes = server.publicKey.encrypt(
                 bytes,
                 padding.OAEP(
@@ -29,9 +26,7 @@ class Computer(Device.Device):
             )
             print("e/b:", encryptedBytes)
             message = str(encryptedBytes)
-            #print("m:", message)
-            #message = "-".join([server.ipAddress, message])
-            #print("j/m:", message)
+            message = "-".join([server.ipAddress, message])
 
         # now encrypt message with first server's publicKey
         bytes = message.encode()
