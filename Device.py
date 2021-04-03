@@ -4,41 +4,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
 
-def generate_private(device_name=""):
-    # generate private key
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend())
-    # serialise the key
-    pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-    private_txt = device_name + '_private_key.txt'
-    keys_path = path.join(getcwd(), 'keys', private_txt)
-    # writing key to the file
-    with open(keys_path, 'wb') as f:
-        f.write(pem)
-    return private_key
-
-
-def generate_public(device_name="", private_key=None):
-    # generate public key
-    public_key = private_key.public_key()
-
-    pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
-    public_txt = device_name + '_public_key.txt'
-    keys_path = path.join(getcwd(), 'keys', public_txt)
-    with open(keys_path, 'wb') as f:
-        f.write(pem)
-    return public_key
-
-
 def test_address(testAddress="", testNetwork=None):
     addresses = testAddress.split(".")
     for i in addresses:
@@ -57,10 +22,43 @@ class Device:
         self.name = name
         self.ipAddress = test_address(ipAddress, torNetwork)
         self.torNetwork = torNetwork
-        self.privateKey = generate_private(name)
-        self.publicKey = generate_public(name, self.privateKey)
+        self.privateKey = self.generate_private()
+        self.publicKey = self.generate_public(self.privateKey)
         self.connectionList = []
         self.buffer = []
+
+    def generate_private(self):
+        # generate private key
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend())
+        # serialise the key
+        pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        private_txt = self.name + '_private_key.txt'
+        keys_path = path.join(getcwd(), 'keys', private_txt)
+        # writing key to the file
+        with open(keys_path, 'wb') as f:
+            f.write(pem)
+        return private_key
+
+    def generate_public(self, private_key=None):
+        # generate public key
+        public_key = private_key.public_key()
+
+        pem = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        public_txt = self.name + '_public_key.txt'
+        keys_path = path.join(getcwd(), 'keys', public_txt)
+        with open(keys_path, 'wb') as f:
+            f.write(pem)
+        return public_key
 
     def send_data(self, destAddr, identNo, data):
         packet = [self.ipAddress, destAddr, identNo, data]

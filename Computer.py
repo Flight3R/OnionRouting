@@ -9,7 +9,6 @@ class Computer(Device.Device):
         torNetwork.computerList.append(self)
 
     def onion_message(self, destAddr, identNo, message):
-        # serverAmount = random.randint(3, len(self.torNetwork.serverList))  ta linijka jest chyba zbędna, zawsze powinien losować 3 serwery, a nie od 3 do tylu ile jest w sieci
         serverOrder = random.sample(self.torNetwork.serverList, 3)
         message = destAddr + "-" + message
 
@@ -21,6 +20,20 @@ class Computer(Device.Device):
         print(self, "to:", destAddr, "\tvia:", serverOrder[0].ipAddress, "\tsent:", message)
         self.connectionList.append(Connection.Connection(None, None, identNo, destAddr))
         self.send_data(serverOrder[0].ipAddress, identNo, message)
+
+    def packets(self, message=""):
+        packet_length = 512
+        data_length = len(message)
+        print(data_length)
+        packet_no = data_length // packet_length
+        mod = data_length % packet_length
+        message += ((packet_length - mod) * '0')
+        substring_list = []
+        for i in range(packet_no + 1):
+            j = packet_length * i
+            substring_list.append(message[j:packet_length + j])
+        return substring_list
+
 
     def buffer_check(self):
         while len(self.buffer) != 0:

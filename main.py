@@ -1,12 +1,12 @@
-import os  # from os import mkdir
-import shutil  # from shutil import rmtree      nie wiem czemu importy konkretnych funkcji z modułów mi nie chcą działać :C
-import time  # from time import sleep
+from os import mkdir
+from shutil import rmtree
+from time import sleep
 import Computer
 import Server
 import TorNetwork
 
-os.mkdir('keys')
-time.sleep(5)
+mkdir('keys')
+sleep(5)
 torNetwork = TorNetwork.TorNetwork([], [])
 
 pc1 = Computer.Computer("PC1", "997.112.420.069", torNetwork)
@@ -33,5 +33,5 @@ for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 # '''
-time.sleep(5)
-shutil.rmtree('keys')
+sleep(5)
+rmtree('keys')
