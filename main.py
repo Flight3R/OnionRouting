@@ -10,7 +10,7 @@ try:
 except FileExistsError:
     pass
 
-sleep(5)
+sleep(2)
 
 torNetwork = TorNetwork.TorNetwork([], [])
 
@@ -53,5 +53,5 @@ for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 
-sleep(5)
+sleep(2)
 rmtree('keys')

@@ -6,6 +6,7 @@ import os
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
+
 def rsa_encrypt(key, data):
     encrypted = key.encrypt(
         data,
@@ -17,11 +18,11 @@ def rsa_encrypt(key, data):
     )
     return encrypted
 
+
 class Computer(Device.Device):
     def __init__(self, name=None, ipAddress=None, torNetwork=None):
         super().__init__(name, ipAddress, torNetwork)
         torNetwork.computerList.append(self)
-
 
     def onion_message(self, destAddr, identNo, message):
         serverOrder = random.sample(self.torNetwork.serverList, 3)
@@ -35,18 +36,19 @@ class Computer(Device.Device):
         print()
         newConnection = Connection.Connection(None, None, port, servers[0].ipAddress)
 
-
         for i in range(3):
             newConnection.symmetricKeys.append(os.urandom(16))
             newConnection.initVectors.append(os.urandom(16))
 
         self.connectionList.append(newConnection)
 
-        data = b"<<_<<".join([servers[1].ipAddress.encode(), newConnection.symmetricKeys[0], newConnection.initVectors[0]])
+        data = b"<<_<<".join(
+            [servers[1].ipAddress.encode(), newConnection.symmetricKeys[0], newConnection.initVectors[0]])
         data = rsa_encrypt(servers[0].publicKey, data)
         self.send_data(servers[0].ipAddress, port, data)
 
-        data = b"<<_<<".join([servers[2].ipAddress.encode(), newConnection.symmetricKeys[1], newConnection.initVectors[1]])
+        data = b"<<_<<".join(
+            [servers[2].ipAddress.encode(), newConnection.symmetricKeys[1], newConnection.initVectors[1]])
         data = rsa_encrypt(servers[1].publicKey, data)
         data = Device.aes_encrypt(newConnection.symmetricKeys[0], newConnection.initVectors[0], data)
         self.send_data(servers[0].ipAddress, port, data)
@@ -65,8 +67,8 @@ class Computer(Device.Device):
         self.send_data(connection.destAddr, connection.destPort, data)
 
     def connection_finalize(self, connection):
-        for i in range(1,4)[::-1]:
-            data = 512 * b"0"
+        for i in range(1, 4)[::-1]:
+            data = 128 * b"0"
             for j in range(i)[::-1]:
                 data = Device.aes_encrypt(connection.symmetricKeys[j], connection.initVectors[j], data)
             self.send_data(connection.destAddr, connection.destPort, data)
@@ -79,7 +81,6 @@ class Computer(Device.Device):
         padded_data = padder.update(bytes_message)
         padded_data += padder.finalize()
         data_list = []
-        print(padded_data[512])
         for i in range(len(padded_data) // 128):
             k = 128 * i
             data_list.append(padded_data[k:k + 128])

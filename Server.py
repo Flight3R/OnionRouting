@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 import random
 
+
 def rsa_decrypt(key, encrypted):
     data = key.decrypt(
         encrypted,
@@ -14,6 +15,7 @@ def rsa_decrypt(key, encrypted):
         )
     )
     return data
+
 
 class Server(Device.Device):
     def __init__(self, name=None, ipAddress=None, torNetwork=None):
@@ -30,7 +32,7 @@ class Server(Device.Device):
 
     def forward_connection(self, packet, connection):
         data = Device.aes_decrypt(connection.symmetricKeys[0], connection.initVectors[0], packet[3])
-        if (data == 512 * b"0"):
+        if data == 128 * b"0":
             print(self, 'REMOVE!!!')
             self.connectionList.remove(connection)
         else:
