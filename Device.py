@@ -95,4 +95,4 @@ class Device:
             )
 
     def __str__(self):
-        return self.ipAddress
+        return self.name + "[" + self.ipAddress + "]"

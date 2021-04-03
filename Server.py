@@ -26,22 +26,23 @@ class Server(Device.Device):
         newConnection.symmetricKeys.append(data[1])
         newConnection.initVectors.append(data[2])
         self.connectionList.append(newConnection)
-        print(self, "\b:\tnew/con from:", newConnection.sourceAddr, "\tto:", newConnection.destAddr, "\tlength:", len(b"<<_<<".join(data)), "\tdata:", b"<<_<<".join(data))
-
+        #print(self, "\b:\tnew/con from:", newConnection.sourceAddr, "\tto:", newConnection.destAddr, "\tlength:", len(b"<<_<<".join(data)), "\tdata:", b"<<_<<".join(data))
+        print("{}:\tnew/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, newConnection.sourceAddr, newConnection.destAddr, len(b"<<_<<".join(data)), b"<<_<<".join(data)))
     def forward_connection(self, packet, connection):
         data = Device.aes_decrypt(connection.symmetricKeys[0], connection.initVectors[0], packet[3])
         if data == 128 * b"0":
-            print(self, "\b:\trem/con from:", connection.sourceAddr, "\tto:", connection.destAddr)
+            #print(self, "\b:\trem/con from:", connection.sourceAddr, "\tto:", connection.destAddr)
+            print("{}:\trem/con from: {}\tto: {}".format(self, connection.sourceAddr, connection.destAddr))
             self.connectionList.remove(connection)
         else:
             self.send_data(connection.destAddr, connection.destPort, data)
-            print(self, "\b:\tfwd/con from:", packet[0], "\tto:", connection.destAddr, "\tlength:", len(data), "\tdata:", data)
-
+            #print(self, "\b:\tfwd/con from:", packet[0], "\tto:", connection.destAddr, "\tlength:", len(data), "\tdata:", data)
+            print("{}:\tfwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, connection.sourceAddr, connection.destAddr, len(data), data))
     def backward_connection(self, packet, connection):
         data = Device.aes_encrypt(connection.symmetricKeys[0], connection.initVectors[0], packet[3])
         self.send_data(connection.sourceAddr, connection.sourcePort, data)
-        print(self, "\b:\tbck/con from:", packet[0], "\tto:",  connection.sourceAddr, "\tlength:", len(data), "\tdata:", data)
-
+        #print(self, "\b:\tbck/con from:", packet[0], "\tto:",  connection.sourceAddr, "\tlength:", len(data), "\tdata:", data)
+        print("{}:\tbck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, connection.destAddr, connection.sourceAddr, len(data), data))
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)

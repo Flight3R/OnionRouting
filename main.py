@@ -12,9 +12,9 @@ except FileExistsError:
 
 torNetwork = TorNetwork.TorNetwork([], [])
 
-pc1 = Computer.Computer("PC1", "1.112.110.069", torNetwork)
+pc1 = Computer.Computer("PC1", "1.112.11.69", torNetwork)
 pc2 = Computer.Computer("PC2", "11.22.33.44", torNetwork)
-pc3 = Computer.Computer("PC3", "4.3.2.1", torNetwork)
+pc3 = Computer.Computer("PC3", "04.03.02.01", torNetwork)
 
 srv1 = Server.Server("SRV1", "11.11.11.11", torNetwork)
 srv2 = Server.Server("SRV2", "22.22.22.22", torNetwork)
@@ -30,20 +30,17 @@ torNetwork.serverList.append(srv4)
 torNetwork.serverList.append(srv5)
 torNetwork.serverList.append(srv6)
 
-pc1.connection_init("4.3.2.1")
+pc1.connection_init("04.03.02.01")
 print('––––––––––––––––––CONN INIT––––––––––––––––––––')
 
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 
-print('––––––––––––––––––SENDING–––––––––––––––––––––')
-
-msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet pellentesque dui. Sed tincidunt fringilla nibh eget sodales. Sed ipsum lorem, pulvinar nec dictum vitae, lobortis et orci accumsan."
-for data in Computer.packets(msg):
-    pc1.connection_continue(pc1.connectionList[0], data)
-
 print('––––––––––––––––––MSG SENT––––––––––––––––––––')
+msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet pellentesque dui. Sed tincidunt fringilla nibh eget sodales. Sed ipsum lorem, pulvinar nec dictum vitae, lobortis et orci accumsan."
+for block in Computer.packets(msg):
+    pc1.connection_continue(pc1.connectionList[0], block)
 
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:

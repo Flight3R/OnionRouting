@@ -1,4 +1,3 @@
-from cryptography.hazmat.primitives import padding
 import Connection
 import Device
 import random
@@ -27,6 +26,15 @@ def packets(message):
         k = 128 * i
         data_list.append(padded_data[k:k + 128])
     return data_list
+
+def unpadder(data):
+    try:
+        unpadder = padding.PKCS7(1024).unpadder()
+        message = unpadder.update(data)
+        message += unpadder.finalize()
+        return message.decode()
+    except ValueError:
+        return data.decode()
 
 class Computer(Device.Device):
     def __init__(self, name=None, ipAddress=None, torNetwork=None):
@@ -87,7 +95,11 @@ class Computer(Device.Device):
                 data = packet[3]
                 for i in range(3):
                     data = Device.aes_decrypt(conn.symmetricKeys[i], conn.initVectors[i], data)
-                print(self, "\b:\tresponse from:", conn.destAddr, "\tlength:", len(data.decode()), "\tmessage:", data.decode())
+                message = unpadder(data)
+                print("{}:\tresponse from: {}\tlength: {}\tmessage: {}".format(self, conn.destAddr, len(message), message))
             except StopIteration:
-                print(self, "\b:\tmessage from:", packet[0], "\tlength:", len(packet[3].decode()), "\tmessage:", packet[3].decode(), "\tresponding...")
-                self.send_data(packet[0], packet[2], packet[3] + b"-la-respuesta-por-tu-puta-madre")
+                message = unpadder(packet[3])
+                print("{}:\tmessage from: {}\tlength: {}\tmessage: {}\tresponding...".format(self, packet[0], len(message), message))
+                respond = "odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadziałało w końcu, to też musi mieć więcej niż 128 bitów dlatego tak dużo piszę"
+                for block in packets(message+respond):
+                    self.send_data(packet[0], packet[2], block)
