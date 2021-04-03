@@ -1,3 +1,4 @@
+from cryptography.hazmat.primitives import padding
 import Connection
 import Device
 import random
@@ -21,6 +22,11 @@ class Computer(Device.Device):
         super().__init__(name, ipAddress, torNetwork)
         torNetwork.computerList.append(self)
 
+
+    def onion_message(self, destAddr, identNo, message):
+        serverOrder = random.sample(self.torNetwork.serverList, 3)
+        message = destAddr + "-" + message
+
     def connection_init(self, destAddr):
         port = random.randint(4000, 4294967295)
         servers = random.sample(self.torNetwork.serverList, 3)
@@ -28,6 +34,7 @@ class Computer(Device.Device):
         [print(i, end="\t") for i in servers]
         print()
         newConnection = Connection.Connection(None, None, port, servers[0].ipAddress)
+
 
         for i in range(3):
             newConnection.symmetricKeys.append(os.urandom(16))
@@ -65,6 +72,18 @@ class Computer(Device.Device):
             self.send_data(connection.destAddr, connection.destPort, data)
 
         self.connectionList.remove(connection)
+
+    def packets(self, message=""):
+        bytes_message = message.encode('utf-8')
+        padder = padding.PKCS7(1024).padder()
+        padded_data = padder.update(bytes_message)
+        padded_data += padder.finalize()
+        data_list = []
+        print(padded_data[512])
+        for i in range(len(padded_data) // 128):
+            k = 128 * i
+            data_list.append(padded_data[k:k + 128])
+        return data_list
 
     def buffer_check(self):
         while len(self.buffer) != 0:
