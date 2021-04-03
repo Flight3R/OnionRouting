@@ -30,14 +30,23 @@ torNetwork.serverList.append(srv3)
 torNetwork.serverList.append(srv4)
 torNetwork.serverList.append(srv5)
 torNetwork.serverList.append(srv6)
+
 pc1.connection_init("4.3.2.1")
-pc1.connection_continue(pc1.connectionList[0], b'alamakotaajamamduzegohujaessa')
-
-#pc1.onion_message("4.3.2.1", 123456, "mam/nadzieje/ze/dziala")
-
-for i in range(20):
+print('––––––––––––––––––CONN INIT––––––––––––––––––––')
+for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 
-#time.sleep(5)
-#shutil.rmtree('keys')
+pc1.connection_continue(pc1.connectionList[0], "ala-ma-kota-a-ja-mam-duzego-huja-essa")
+print('––––––––––––––––––MSG SENT––––––––––––––––––––')
+
+for i in range(10):
+    for host in torNetwork.serverList + torNetwork.computerList:
+        host.buffer_check()
+
+pc1.connection_finalize(pc1.connectionList[0])
+print('––––––––––––––––––CONN FIN––––––––––––––––––––')
+
+for i in range(10):
+    for host in torNetwork.serverList + torNetwork.computerList:
+        host.buffer_check()
