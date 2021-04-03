@@ -5,7 +5,11 @@ import Computer
 import Server
 import TorNetwork
 
-mkdir('keys')
+try:
+    mkdir('keys')
+except FileExistsError:
+    pass
+
 sleep(5)
 torNetwork = TorNetwork.TorNetwork([], [])
 
@@ -26,12 +30,27 @@ torNetwork.serverList.append(srv3)
 torNetwork.serverList.append(srv4)
 torNetwork.serverList.append(srv5)
 torNetwork.serverList.append(srv6)
-# '''
-pc1.onion_message("4.3.2.1", 123456, "mam/nadzieje/ze/dziala")
+
+pc1.connection_init("4.3.2.1")
+print('––––––––––––––––––CONN INIT––––––––––––––––––––')
 
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
-# '''
+
+pc1.connection_continue(pc1.connectionList[0], "ala-ma-kota-a-ja-mam-duzego-huja-essa")
+print('––––––––––––––––––MSG SENT––––––––––––––––––––')
+
+for i in range(10):
+    for host in torNetwork.serverList + torNetwork.computerList:
+        host.buffer_check()
+
+pc1.connection_finalize(pc1.connectionList[0])
+print('––––––––––––––––––CONN FIN––––––––––––––––––––')
+
+for i in range(10):
+    for host in torNetwork.serverList + torNetwork.computerList:
+        host.buffer_check()
+
 sleep(5)
 rmtree('keys')
