@@ -10,8 +10,6 @@ try:
 except FileExistsError:
     pass
 
-sleep(2)
-
 torNetwork = TorNetwork.TorNetwork([], [])
 
 pc1 = Computer.Computer("PC1", "1.112.110.069", torNetwork)
@@ -39,7 +37,12 @@ for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 
-pc1.connection_continue(pc1.connectionList[0], "ala-ma-kota-a-ja-mam-duzego-huja-essa")
+print('––––––––––––––––––SENDING–––––––––––––––––––––')
+
+msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet pellentesque dui. Sed tincidunt fringilla nibh eget sodales. Sed ipsum lorem, pulvinar nec dictum vitae, lobortis et orci accumsan."
+for data in Computer.packets(msg):
+    pc1.connection_continue(pc1.connectionList[0], data)
+
 print('––––––––––––––––––MSG SENT––––––––––––––––––––')
 
 for i in range(10):
@@ -53,5 +56,5 @@ for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 
-sleep(2)
-rmtree('keys')
+#sleep(2)
+#rmtree('keys')

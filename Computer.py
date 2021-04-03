@@ -3,30 +3,35 @@ import Connection
 import Device
 import random
 import os
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-
+from cryptography.hazmat.primitives import hashes, padding
+from cryptography.hazmat.primitives import asymmetric
 
 def rsa_encrypt(key, data):
     encrypted = key.encrypt(
         data,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        asymmetric.padding.OAEP(
+            mgf=asymmetric.padding.MGF1(algorithm=hashes.SHA256()),
             algorithm=hashes.SHA256(),
             label=None
         )
     )
     return encrypted
 
+def packets(message):
+    bytes_message = message.encode('utf-8')
+    padder = padding.PKCS7(1024).padder()
+    padded_data = padder.update(bytes_message)
+    padded_data += padder.finalize()
+    data_list = []
+    for i in range(len(padded_data) // 128):
+        k = 128 * i
+        data_list.append(padded_data[k:k + 128])
+    return data_list
 
 class Computer(Device.Device):
     def __init__(self, name=None, ipAddress=None, torNetwork=None):
         super().__init__(name, ipAddress, torNetwork)
         torNetwork.computerList.append(self)
-
-    def onion_message(self, destAddr, identNo, message):
-        serverOrder = random.sample(self.torNetwork.serverList, 3)
-        message = destAddr + "-" + message
 
     def connection_init(self, destAddr):
         port = random.randint(4000, 4294967295)
@@ -60,7 +65,6 @@ class Computer(Device.Device):
         self.send_data(servers[0].ipAddress, port, data)
 
     def connection_continue(self, connection, data):
-        data = data.encode()
         for i in range(3)[::-1]:
             data = Device.aes_encrypt(connection.symmetricKeys[i], connection.initVectors[i], data)
 
@@ -75,17 +79,6 @@ class Computer(Device.Device):
 
         self.connectionList.remove(connection)
 
-    def packets(self, message=""):
-        bytes_message = message.encode('utf-8')
-        padder = padding.PKCS7(1024).padder()
-        padded_data = padder.update(bytes_message)
-        padded_data += padder.finalize()
-        data_list = []
-        for i in range(len(padded_data) // 128):
-            k = 128 * i
-            data_list.append(padded_data[k:k + 128])
-        return data_list
-
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
@@ -94,7 +87,7 @@ class Computer(Device.Device):
                 data = packet[3]
                 for i in range(3):
                     data = Device.aes_decrypt(conn.symmetricKeys[i], conn.initVectors[i], data)
-                print("at:", self, "response from:", conn.destAddr, "\tlength:", len(data.decode()), "\tmessage:", data.decode())
+                print(self, "\b:\tresponse from:", conn.destAddr, "\tlength:", len(data.decode()), "\tmessage:", data.decode())
             except StopIteration:
-                print("at:", self, "message from:", packet[0], "\tlength:", len(packet[3].decode()), "\tmessage:", packet[3].decode(), "\tresponding...")
+                print(self, "\b:\tmessage from:", packet[0], "\tlength:", len(packet[3].decode()), "\tmessage:", packet[3].decode(), "\tresponding...")
                 self.send_data(packet[0], packet[2], packet[3] + b"-la-respuesta-por-tu-puta-madre")
