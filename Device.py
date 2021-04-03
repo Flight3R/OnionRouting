@@ -9,11 +9,6 @@ def aes_encrypt(key, initVector, data):
     encryptor = cipher.encryptor()
     return encryptor.update(data)
 
-def aes_encrypt(key, initVector, data):
-    cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
-    encryptor = cipher.encryptor()
-    return encryptor.update(data)
-
 def aes_decrypt(key, initVector, encrypted):
     cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
     return cipher.decryptor().update(encrypted)
@@ -22,7 +17,7 @@ def generate_private(device_name=""):
     # generate private key
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048,
+        key_size=1024,
         backend=default_backend())
     # serialise the key
     pem = private_key.private_bytes(
