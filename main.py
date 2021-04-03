@@ -30,12 +30,14 @@ torNetwork.serverList.append(srv3)
 torNetwork.serverList.append(srv4)
 torNetwork.serverList.append(srv5)
 torNetwork.serverList.append(srv6)
-# '''
-pc1.onion_message("4.3.2.1", 123456, "mam/nadzieje/ze/dziala")
+pc1.connection_init("4.3.2.1")
+pc1.connection_continue(pc1.connectionList[0], b'alamakotaajamamduzegohujaessa')
 
-for i in range(10):
+#pc1.onion_message("4.3.2.1", 123456, "mam/nadzieje/ze/dziala")
+
+for i in range(20):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
-# '''
+
 #time.sleep(5)
 #shutil.rmtree('keys')

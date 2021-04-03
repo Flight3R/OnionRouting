@@ -2,15 +2,30 @@ from os import getcwd, path
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 from glob import glob
 
+def aes_encrypt(key, initVector, data):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
+    encryptor = cipher.encryptor()
+    return encryptor.update(data)
 
+def aes_encrypt(key, initVector, data):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
+    encryptor = cipher.encryptor()
+    return encryptor.update(data)
+
+def aes_decrypt(key, initVector, encrypted):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
+    return cipher.decryptor().update(encrypted)
 
 def generate_private(device_name=""):
     # generate private key
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048,
+        key_size=4096,
         backend=default_backend())
     # serialise the key
     pem = private_key.private_bytes(
@@ -74,7 +89,7 @@ class Device:
 
     def load_private_key(self):
         with open("keys/" + self.name + "_private_key.txt", "rb") as key_file:
-            private_key = serialization.load_pem_private_key(
+            self.privateKey = serialization.load_pem_private_key(
                 key_file.read(),
                 password=None,
                 backend=default_backend()
@@ -82,13 +97,13 @@ class Device:
 
     def load_public_key(self):
         with open("keys/" + self.name + "_public_key.txt", "rb") as key_file:
-            public_key = serialization.load_pem_public_key(
+            self.publicKey = serialization.load_pem_public_key(
                 key_file.read(),
                 backend=default_backend()
             )
 
-    def send_data(self, destAddr, identNo, data):
-        packet = [self.ipAddress, destAddr, identNo, data]
+    def send_data(self, destAddr, port, data):
+        packet = [self.ipAddress, destAddr, port, data]
         for host in self.torNetwork.serverList + self.torNetwork.computerList:
             if destAddr == host.ipAddress:
                 host.buffer.append(packet)
