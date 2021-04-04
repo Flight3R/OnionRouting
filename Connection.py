@@ -6,3 +6,5 @@ class Connection:
         self.destAddr = destAddr
         self.symmetricKeys = []
         self.initVectors = []
+        self.dataBuffer = []
+        self.isEndNode = False

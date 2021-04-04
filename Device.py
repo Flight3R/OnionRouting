@@ -1,7 +1,7 @@
 from os import getcwd, path
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 def aes_encrypt(key, initVector, data):
@@ -24,6 +24,25 @@ def test_address(testAddress="", testNetwork=None):
             print("Reused address")
             return "0.0.0.0"
     return testAddress
+
+def packets(message):
+    padder = padding.PKCS7(1024).padder()
+    padded_data = padder.update(message)
+    padded_data += padder.finalize()
+    data_list = []
+    for i in range(len(padded_data) // 128):
+        k = 128 * i
+        data_list.append(padded_data[k:k + 128])
+    return data_list
+
+def unpadder(data):
+    try:
+        unpadder = padding.PKCS7(1024).unpadder()
+        message = unpadder.update(data)
+        message += unpadder.finalize()
+        return message
+    except ValueError:
+        return data
 
 class Device:
     def __init__(self, name=None, ipAddress=None, torNetwork=None):
@@ -70,8 +89,8 @@ class Device:
         with open(keys_path, 'wb') as f:
             f.write(pem)
 
-    def send_data(self, destAddr, port, data):
-        packet = [self.ipAddress, destAddr, port, data]
+    def send_data(self, destAddr, port, counter, data):
+        packet = [self.ipAddress, destAddr, port, counter, data]
         for host in self.torNetwork.serverList + self.torNetwork.computerList:
             if destAddr == host.ipAddress:
                 host.buffer.append(packet)

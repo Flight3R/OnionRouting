@@ -38,9 +38,7 @@ for i in range(10):
         host.buffer_check()
 
 print('––––––––––––––––––MSG SENT––––––––––––––––––––')
-msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet pellentesque dui. Sed tincidunt fringilla nibh eget sodales. Sed ipsum lorem, pulvinar nec dictum vitae, lobortis et orci accumsan."
-for block in Computer.packets(msg):
-    pc1.connection_continue(pc1.connectionList[0], block)
+#msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet pellentesque dui. Sed tincidunt fringilla nibh eget sodales. Sed ipsum lorem, pulvinar nec dictum vitae, lobortis et orci accumsan."
 
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
