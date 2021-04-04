@@ -27,29 +27,28 @@ class Server(Device.Device):
         newConnection.symmetricKeys.append(data[1])
         newConnection.initVectors.append(data[2])
         if any(nextAddr == host.ipAddress for host in self.torNetwork.computerList):
-            newConnection.isEndNone = True
+            newConnection.isEndNode = True
         self.connectionList.append(newConnection)
         print("{}:\tnew/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, newConnection.sourceAddr, newConnection.destAddr, len(b"<<_<<".join(data)), b"<<_<<".join(data)))
 
-    def forward_connection(self, dataList, connection):
+    def forward_connection(self, connection, counter, dataList):
         message = b""
         for block in dataList:
             part = Device.aes_decrypt(connection.symmetricKeys[0], connection.initVectors[0], block)
-            message += Device.unpadder(part)
-
-        if message == 128 * b"0":
-            print("{}:\trem/con from: {}\tto: {}".format(self, connection.sourceAddr, connection.destAddr))
-            self.connectionList.remove(connection)
+            if part == 128 * b"0":
+                print("{}:\trem/con from: {}\tto: {}".format(self, connection.sourceAddr, connection.destAddr))
+                self.connectionList.remove(connection)
+                break
+            else:
+                message += Device.unpadder(part)
         else:
-            self.send_data(connection.destAddr, connection.destPort, 0, message)
+            self.send_data(connection.destAddr, connection.destPort, counter, message)
             print("{}:\tfwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, connection.sourceAddr, connection.destAddr, len(message), message))
 
-    def backward_connection(self, data, connection):
-        blocks = Device.packets(data)
-        for i, block in enumerate(blocks):
-            data = Device.aes_encrypt(connection.symmetricKeys[0], connection.initVectors[0], block)
-            self.send_data(connection.sourceAddr, connection.sourcePort, len(blocks)-i-1, data)
-            print("{}:\tbck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, connection.destAddr, connection.sourceAddr, len(data), data))
+    def backward_connection(self, connection, counter, data):
+        data = Device.aes_encrypt(connection.symmetricKeys[0], connection.initVectors[0], data)
+        self.send_data(connection.sourceAddr, connection.sourcePort, counter, data)
+        print("{}:\tbck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, connection.destAddr, connection.sourceAddr, len(data), data))
 
     def buffer_check(self):
             while len(self.buffer) != 0:
@@ -57,14 +56,20 @@ class Server(Device.Device):
                 try:
                     conn = next(filter(lambda c: c.sourcePort == packet[2], self.connectionList))
                     if not conn.isEndNode:
-                        self.forward_connection([packet[4]], conn)
+                        self.forward_connection(conn, packet[3], [packet[4]])
                     elif packet[3] != 0:
                         conn.dataBuffer.append(packet[4])
                     else:
-                        self.forward_connection(conn.dataBuffer + [packet[4]], conn)
+                        self.forward_connection(conn, 0, conn.dataBuffer + [packet[4]])
+                        conn.dataBuffer = []
                 except StopIteration:
                     try:
                         conn = next(filter(lambda c: c.destPort == packet[2], self.connectionList))
-                        self.backward_connection(packet[4], conn)
+                        if not conn.isEndNode:
+                            self.backward_connection(conn, packet[3], packet[4])
+                        else:
+                            blocks = Device.packets(packet[4])
+                            for i,block in enumerate(blocks):
+                                self.backward_connection(conn, len(blocks)-i-1, block)
                     except StopIteration:
                         self.create_connection(packet)

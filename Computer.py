@@ -16,8 +16,6 @@ def rsa_encrypt(key, data):
     )
     return encrypted
 
-
-
 class Computer(Device.Device):
     def __init__(self, name=None, ipAddress=None, torNetwork=None):
         super().__init__(name, ipAddress, torNetwork)
@@ -55,7 +53,7 @@ class Computer(Device.Device):
         self.send_data(servers[0].ipAddress, port, 0, data)
 
     def onion_message(self, connection,message):
-        blocks = Device.packets(message)
+        blocks = Device.packets(message.encode())
         for i, block in enumerate(blocks):
             self.connection_continue(connection, len(blocks)-i-1, block)
 
@@ -82,8 +80,13 @@ class Computer(Device.Device):
                 data = packet[4]
                 for i in range(3):
                     data = Device.aes_decrypt(conn.symmetricKeys[i], conn.initVectors[i], data)
-                message = Device.unpadder(data).decode()
-                print("{}:\tresponse from: {}\tlength: {}\tmessage: {}".format(self, conn.destAddr, len(message), message))
+                if packet[3] != 0:
+                    conn.dataBuffer.append(data)
+                else:
+                    message = Device.unpadder(b"".join([data for data in conn.dataBuffer] + [data])).decode()
+                    print("{}:\tresponse from: {}\tlength: {}\tmessage: {}".format(self, conn.destAddr, len(message), message))
+                    conn.dataBuffer = []
+
             except StopIteration:
                 message = packet[4]
                 print("{}:\tmessage from: {}\tlength: {}\tmessage: {}\tresponding...".format(self, packet[0], len(message), message))

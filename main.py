@@ -38,18 +38,21 @@ for i in range(10):
         host.buffer_check()
 
 print('––––––––––––––––––MSG SENT––––––––––––––––––––')
-#msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet pellentesque dui. Sed tincidunt fringilla nibh eget sodales. Sed ipsum lorem, pulvinar nec dictum vitae, lobortis et orci accumsan."
+msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero."
+pc1.onion_message(pc1.connectionList[0], msg)
 
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
 
 pc1.connection_finalize(pc1.connectionList[0])
+
 print('––––––––––––––––––CONN FIN––––––––––––––––––––')
 
 for i in range(10):
     for host in torNetwork.serverList + torNetwork.computerList:
         host.buffer_check()
+
 
 #sleep(2)
 #rmtree('keys')
