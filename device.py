@@ -1,29 +1,34 @@
+import threading
 from os import getcwd, path
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-def aes_encrypt(key, initVector, data):
-    cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
+
+def aes_encrypt(key, init_vector, data):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector))
     encryptor = cipher.encryptor()
     return encryptor.update(data)
 
-def aes_decrypt(key, initVector, encrypted):
-    cipher = Cipher(algorithms.AES(key), modes.CBC(initVector))
+
+def aes_decrypt(key, init_vector, encrypted):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector))
     return cipher.decryptor().update(encrypted)
 
-def test_address(testAddress="", testNetwork=None):
-    addresses = testAddress.split(".")
+
+def test_address(address="", test_network=None):
+    addresses = address.split(".")
     for i in addresses:
         if int(i) < 0 or int(i) > 255:
             print("Invalid address")
             return "0.0.0.0"
-    for i in testNetwork.computerList + testNetwork.serverList:
-        if i.ipAddress == testAddress:
+    for i in test_network.computer_list + test_network.server_list:
+        if i.ip_address == address:
             print("Reused address")
             return "0.0.0.0"
-    return testAddress
+    return address
+
 
 def packets(message):
     padder = padding.PKCS7(1024).padder()
@@ -35,7 +40,8 @@ def packets(message):
         data_list.append(padded_data[k:k + 128])
     return data_list
 
-def unpadder(data):
+
+def unpad(data):
     try:
         unpadder = padding.PKCS7(1024).unpadder()
         message = unpadder.update(data)
@@ -44,19 +50,23 @@ def unpadder(data):
     except ValueError:
         return data
 
-class Device:
-    def __init__(self, name=None, ipAddress=None, torNetwork=None):
+
+class Device(threading.Thread):
+    def __init__(self, name=None, ip_address=None, tor_network=None):
+        threading.Thread.__init__(self)
         self.name = name
-        self.ipAddress = test_address(ipAddress, torNetwork)
-        self.torNetwork = torNetwork
-        self.connectionList = []
+        self.ip_address = test_address(ip_address, tor_network)
+        self.tor_network = tor_network
+        self.connection_list = []
         self.buffer = []
         try:
             self.load_private_key()
             self.load_public_key()
-        except Exception:
+        except FileNotFoundError:
             self.generate_private()
             self.generate_public()
+        self.run_event = threading.Event()
+        self.run_event.set()
 
     def generate_private(self):
         # generate private key
@@ -73,8 +83,8 @@ class Device:
         private_txt = self.name + '_private_key.txt'
         keys_path = path.join(getcwd(), 'keys', private_txt)
         # writing key to the file
-        with open(keys_path, 'wb') as f:
-            f.write(pem)
+        with open(keys_path, 'wb') as file:
+            file.write(pem)
 
     def generate_public(self):
         # generate public key
@@ -86,13 +96,13 @@ class Device:
         )
         public_txt = self.name + '_public_key.txt'
         keys_path = path.join(getcwd(), 'keys', public_txt)
-        with open(keys_path, 'wb') as f:
-            f.write(pem)
+        with open(keys_path, 'wb') as file:
+            file.write(pem)
 
-    def send_data(self, destAddr, port, counter, data):
-        packet = [self.ipAddress, destAddr, port, counter, data]
-        for host in self.torNetwork.serverList + self.torNetwork.computerList:
-            if destAddr == host.ipAddress:
+    def send_data(self, dest_addr, port, counter, data):
+        packet = [self.ip_address, dest_addr, port, counter, data]
+        for host in self.tor_network.server_list + self.tor_network.computer_list:
+            if dest_addr == host.ip_address:
                 host.buffer.append(packet)
                 break
 
@@ -114,4 +124,4 @@ class Device:
             )
 
     def __str__(self):
-        return self.name + "[" + self.ipAddress + "]"
+        return self.name + "[" + self.ip_address + "]"
