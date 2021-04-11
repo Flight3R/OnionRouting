@@ -27,8 +27,8 @@ class Computer(device.Device):
     def connection_init(self, dest_addr):
         port = random.randint(4000, 4294967295)
         servers = random.sample(self.tor_network.server_list, 3)
-        print("servers:", end="\t")
-        [print(i, end="\t") for i in servers]
+        print('servers:', end='\t')
+        [print(i, end='\t') for i in servers]
         print()
         new_connection = connection.Connection(None, None, port, servers[0].ip_address)
 
@@ -38,19 +38,19 @@ class Computer(device.Device):
 
         self.connection_list.append(new_connection)
 
-        data = b"<<_<<".join(
+        data = b'<<_<<'.join(
             [servers[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
-        data = rsa_encrypt(servers[0].publicKey, data)
+        data = rsa_encrypt(servers[0].public_key, data)
         self.send_data(servers[0].ip_address, port, 0, data)
 
-        data = b"<<_<<".join(
+        data = b'<<_<<'.join(
             [servers[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
-        data = rsa_encrypt(servers[1].publicKey, data)
+        data = rsa_encrypt(servers[1].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
         self.send_data(servers[0].ip_address, port, 0, data)
 
-        data = b"<<_<<".join([dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2]])
-        data = rsa_encrypt(servers[2].publicKey, data)
+        data = b'<<_<<'.join([dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2]])
+        data = rsa_encrypt(servers[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
         self.send_data(servers[0].ip_address, port, 0, data)
@@ -68,7 +68,7 @@ class Computer(device.Device):
 
     def connection_finalize(self, connection):
         for i in range(1, 4)[::-1]:
-            data = 128 * b"0"
+            data = 128 * b'0'
             for j in range(i)[::-1]:
                 data = device.aes_encrypt(connection.symmetric_keys[j], connection.init_vectors[j], data)
             self.send_data(connection.dest_addr, connection.dest_port, 0, data)
@@ -86,15 +86,15 @@ class Computer(device.Device):
                 if packet[3] != 0:
                     conn.data_buffer.append(data)
                 else:
-                    message = device.unpad(b"".join([data for data in conn.data_buffer] + [data])).decode()
-                    print("{}:\tresponse from: {}\tlength: {}\tmessage: {}".format(self, conn.dest_addr, len(message), message))
+                    message = device.remove_padding(b"".join([data for data in conn.data_buffer] + [data])).decode()
+                    device.log_write('{}:\tresponse from: {}\tlength: {}\tmessage: {}'.format(self, conn.dest_addr, len(message), message))
                     conn.data_buffer = []
 
             except StopIteration:
                 message = packet[4]
-                print("{}:\tmessage from: {}\tlength: {}\tmessage: {}\tresponding...".format(self, packet[0], len(message), message))
-                respond = b"odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze"
-                self.send_data(packet[0], packet[2], 0, message+respond)
+                device.log_write('{}:\tmessage from: {}\tlength: {}\tmessage: {}\tresponding...'.format(self, packet[0], len(message), message))
+                response = b'odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze'
+                self.send_data(packet[0], packet[2], 0, message+response)
 
     def run(self):
         while self.run_event.is_set():

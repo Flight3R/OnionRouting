@@ -23,7 +23,7 @@ class Server(device.Device):
         super().__init__(name, ip_address, tor_network)
 
     def create_connection(self, packet):
-        data = rsa_decrypt(self.privateKey, packet[4]).split(b"<<_<<")  # decrypt packet[3] with self.privateKey before split
+        data = rsa_decrypt(self.private_key, packet[4]).split(b'<<_<<')  # decrypt packet[3] with self.privateKey before split
         next_port = random.randint(4000, 4294967295)
         next_addr = data[0].decode()
         new_connection = connection.Connection(packet[0], packet[2], next_port, next_addr)
@@ -32,25 +32,25 @@ class Server(device.Device):
         if any(next_addr == host.ip_address for host in self.tor_network.computer_list):
             new_connection.is_end_node = True
         self.connection_list.append(new_connection)
-        print("{}:\tnew/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(b"<<_<<".join(data)), b"<<_<<".join(data)))
+        device.log_write('{}:\tnew/con from: {}\tto: {}\tlength: {}\tdata: {}'.format(self, new_connection.source_addr, new_connection.dest_addr, len(b'<<_<<'.join(data)), b'<<_<<'.join(data)))
 
     def forward_connection(self, connection, counter, data_list):
-        message = b""
+        message = b''
         for block in data_list:
             part = device.aes_decrypt(connection.symmetric_keys[0], connection.init_vectors[0], block)
-            if part == 128 * b"0":
-                print("{}:\trem/con from: {}\tto: {}".format(self, connection.source_addr, connection.dest_addr))
+            if part == 128 * b'0':
+                device.log_write('{}:\trem/con from: {}\tto: {}'.format(self, connection.source_addr, connection.dest_addr))
                 self.connection_list.remove(connection)
                 break
-            message += device.unpad(part)
+            message += device.remove_padding(part)
         else:
             self.send_data(connection.dest_addr, connection.dest_port, counter, message)
-            print("{}:\tfwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, connection.source_addr, connection.dest_addr, len(message), message))
+            device.log_write('{}:\tfwd/con from: {}\tto: {}\tlength: {}\tdata: {}'.format(self, connection.source_addr, connection.dest_addr, len(message), message))
 
     def backward_connection(self, connection, counter, data):
         data = device.aes_encrypt(connection.symmetric_keys[0], connection.init_vectors[0], data)
         self.send_data(connection.source_addr, connection.source_port, counter, data)
-        print("{}:\tbck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, connection.dest_addr, connection.source_addr, len(data), data))
+        device.log_write('{}:\tbck/con from: {}\tto: {}\tlength: {}\tdata: {}'. format(self, connection.dest_addr, connection.source_addr, len(data), data))
 
     def buffer_check(self):
         while len(self.buffer) != 0:
