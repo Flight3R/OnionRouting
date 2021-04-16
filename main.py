@@ -8,12 +8,12 @@ import tor_network
 
 
 try:
-    mkdir('keys')
+    mkdir("keys")
 except FileExistsError:
     pass
 
 try:
-    remove('logs.txt')
+    remove("logs.txt")
 except FileNotFoundError:
     pass
 
@@ -40,18 +40,18 @@ torNetwork.server_list.append(srv6)
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.start()
 
-print('––––––––––––––––––CONN INIT––––––––––––––––––––')
+print("––––––––––––––––––CONN INIT––––––––––––––––––––")
 pc1.connection_init("04.03.02.01")
 
 sleep(2)
 
-print('––––––––––––––––––MSG SENT––––––––––––––––––––')
-MESSAGE = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero.'
+print("––––––––––––––––––MSG SENT––––––––––––––––––––")
+MESSAGE = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero."
 pc1.onion_message(pc1.connection_list[0], MESSAGE)
 
 sleep(2)
 
-print('––––––––––––––––––CONN FIN––––––––––––––––––––')
+print("––––––––––––––––––CONN FIN––––––––––––––––––––")
 pc1.connection_finalize(pc1.connection_list[0])
 
 sleep(2)
@@ -60,10 +60,10 @@ for host in torNetwork.server_list + torNetwork.computer_list:
     host.run_event.clear()
     host.join()
 
-print('––––––––––––––––––TERM––––––––––––––––––––––––')
+print("––––––––––––––––––TERM––––––––––––––––––––––––")
 
 # sleep(2)
-# rmtree('keys')
+# rmtree("keys")
 
 run_event = threading.Event()
 run_event.set()

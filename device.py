@@ -8,9 +8,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 def log_write(log_message):
     print(log_message)
-    with open('logs.txt', 'a+') as file:
+    with open("logs.txt", "a+") as file:
         file.write(log_message)
-        file.write('\n')
+        file.write("\n")
 
 
 def aes_encrypt(key, init_vector, data):
@@ -24,33 +24,40 @@ def aes_decrypt(key, init_vector, encrypted):
     return cipher.decryptor().update(encrypted)
 
 
-def test_address(address='', test_network=None):
-    addresses = address.split('.')
+def test_address(address="", test_network=None):
+    addresses = address.split(".")
     for i in addresses:
         if int(i) < 0 or int(i) > 255:
-            print('Invalid address')
+            print("Invalid address")
             return "0.0.0.0"
     for i in test_network.computer_list + test_network.server_list:
         if i.ip_address == address:
-            print('Reused address')
-            return '0.0.0.0'
+            print("Reused address")
+            return "0.0.0.0"
     return address
 
 
 def packets(message):
-    padder = padding.PKCS7(1024).padder()
+    padder = padding.PKCS7(960).padder()
     padded_data = padder.update(message)
     padded_data += padder.finalize()
     data_list = []
-    for i in range(len(padded_data) // 128):
-        k = 128 * i
-        data_list.append(padded_data[k:k + 128])
+    for i in range(len(padded_data) // 120):
+        k = 120 * i
+        data_list.append(padded_data[k:k + 120])
     return data_list
+
+
+def prepare_number(number):
+    string = str(number).encode()
+    zeros = b"0" * (3 - len(string))
+    string = zeros + string
+    return string
 
 
 def remove_padding(data):
     try:
-        unpadder = padding.PKCS7(1024).unpadder()
+        unpadder = padding.PKCS7(960).unpadder()
         message = unpadder.update(data)
         message += unpadder.finalize()
         return message
@@ -70,10 +77,10 @@ def generate_private(name):
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
     )
-    private_txt = name + '_private_key.txt'
-    keys_path = path.join(getcwd(), 'keys', private_txt)
+    private_txt = name + "_private_key.txt"
+    keys_path = path.join(getcwd(), "keys", private_txt)
     # writing key to the file
-    with open(keys_path, 'wb') as file:
+    with open(keys_path, "wb") as file:
         file.write(pem)
     return private_key
 
@@ -86,16 +93,16 @@ def generate_public(name, private_key):
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
-    public_txt = name + '_public_key.txt'
-    keys_path = path.join(getcwd(), 'keys', public_txt)
-    with open(keys_path, 'wb') as file:
+    public_txt = name + "_public_key.txt"
+    keys_path = path.join(getcwd(), "keys", public_txt)
+    with open(keys_path, "wb") as file:
         file.write(pem)
     return public_key
 
 
 def load_private_key(name):
-    path_name = path.join(getcwd(), 'keys', (name + '_private_key.txt'))
-    with open(path_name, 'rb') as key_file:
+    path_name = path.join(getcwd(), "keys", (name + "_private_key.txt"))
+    with open(path_name, "rb") as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),
             password=None,
@@ -105,8 +112,8 @@ def load_private_key(name):
 
 
 def load_public_key(name):
-    path_name = path.join(getcwd(), 'keys', (name + '_public_key.txt'))
-    with open(path_name, 'rb') as key_file:
+    path_name = path.join(getcwd(), "keys", (name + "_public_key.txt"))
+    with open(path_name, "rb") as key_file:
         public_key = serialization.load_pem_public_key(
             key_file.read(),
             backend=default_backend()
@@ -131,12 +138,12 @@ class Device(threading.Thread):
         self.run_event = threading.Event()
         self.run_event.set()
 
-    def send_data(self, dest_addr, port, counter, data):
-        packet = [self.ip_address, dest_addr, port, counter, data]
+    def send_data(self, dest_addr, port, data):
+        packet = [self.ip_address, dest_addr, port, data]
         for host in self.tor_network.server_list + self.tor_network.computer_list:
             if dest_addr == host.ip_address:
                 host.buffer.append(packet)
                 break
 
     def __str__(self):
-        return self.name + '[' + self.ip_address + ']'
+        return self.name + "[" + self.ip_address + "]"
