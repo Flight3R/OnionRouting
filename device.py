@@ -7,11 +7,12 @@ from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
-def log_write(log_message):
-    print(log_message)
-    with open("logs.txt", "a+") as file:
-        file.write(log_message)
-        file.write("\n")
+def log_write(file, log_message):
+    if file == "console":
+        print(log_message)
+    with open(path.join(getcwd(), "logs", file + "_logs.txt"), "a+") as file:
+            file.write(log_message)
+            file.write("\n")
 
 
 def aes_encrypt(key, init_vector, data):
@@ -83,8 +84,8 @@ def generate_private_key(name):
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
     )
-    private_txt = name + "_private_key.txt"
-    keys_path = path.join(getcwd(), "keys", private_txt)
+    private_filename = name + "_private_key.txt"
+    keys_path = path.join(getcwd(), "keys", private_filename)
     # writing key to the file
     with open(keys_path, "wb") as file:
         file.write(pem)
@@ -99,8 +100,8 @@ def generate_public_key(name, private_key):
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
-    public_txt = name + "_public_key.txt"
-    keys_path = path.join(getcwd(), "keys", public_txt)
+    public_filename = name + "_public_key.txt"
+    keys_path = path.join(getcwd(), "keys", public_filename)
     with open(keys_path, "wb") as file:
         file.write(pem)
     return public_key

@@ -1,5 +1,5 @@
-from os import mkdir, remove
-# from shutil import rmtree
+from os import mkdir
+from shutil import rmtree
 from time import sleep
 import computer
 import server
@@ -12,9 +12,12 @@ except FileExistsError:
     pass
 
 try:
-    remove("logs.txt")
+    rmtree("logs")
 except FileNotFoundError:
     pass
+
+mkdir("logs")
+
 
 torNetwork = tor_network.TorNetwork([], [])
 
@@ -42,18 +45,18 @@ for host in torNetwork.server_list + torNetwork.computer_list:
 print("––––––––––––––––––CONN INIT––––––––––––––––––––")
 pc1.connection_init("04.03.02.01")
 
-sleep(2)
+sleep(1)
 
 print("––––––––––––––––––MSG SENT––––––––––––––––––––")
 MESSAGE = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero."
 pc1.onion_message(pc1.connection_list[0], MESSAGE)
 
-sleep(2)
+sleep(1)
 
 print("––––––––––––––––––CONN FIN––––––––––––––––––––")
 pc1.connection_finalize(pc1.connection_list[0])
 
-sleep(2)
+sleep(1)
 
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.run_event.clear()

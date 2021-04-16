@@ -77,29 +77,39 @@ class Computer(device.Device):
             self.send_data(current_connection.dest_addr, current_connection.dest_port, data)
         self.connection_list.remove(current_connection)
 
+    def handle_self_connection(self, current_connection, raw_data):
+        for i in range(3):
+            raw_data = device.aes_decrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i], raw_data)
+        data = raw_data.split(self.splitter)
+        number = data[0]
+        message = data[1]
+        if number != b"000":
+            current_connection.data_buffer.append(message)
+        else:
+            unpadded_message = device.remove_padding(b"".join([data for data in current_connection.data_buffer] + [message])).decode()
+            device.log_write("console", "{}:\treceived response from: {}\tlength: {}\tmessage: {}"
+                             .format(self, current_connection.dest_addr, len(unpadded_message), unpadded_message))
+            current_connection.data_buffer = []
+
+    def handle_new_connection(self, packet):
+        message = packet[3]
+        device.log_write("console", "{}:\treceived message from: {}\tlength: {}\tmessage: {}\tresponding..."
+                         .format(self, packet[0], len(message), message))
+        # write from keyboard
+        response = b" */*/* odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze"
+        self.send_data(packet[0], packet[2], response)
+
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
+            device.log_write("sniff", "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdest_port: {}\tdata_length: {}\traw_data: {}"
+                             .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.dest_port == packet[2], self.connection_list))
-                data = packet[3]
-                for i in range(3):
-                    data = device.aes_decrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i], data)
-                data = data.split(self.splitter)
-                number = data[0]
-                message = data[1]
-                if number != b"000":
-                    current_connection.data_buffer.append(message)
-                else:
-                    unpadded_message = device.remove_padding(b"".join([data for data in current_connection.data_buffer] + [message])).decode()
-                    device.log_write("{}:\treceived response from: {}\tlength: {}\tmessage: {}".format(self, current_connection.dest_addr, len(unpadded_message), unpadded_message))
-                    current_connection.data_buffer = []
+                self.handle_self_connection(current_connection, packet[3])
 
             except StopIteration:
-                message = packet[3]
-                device.log_write("{}:\treceived message from: {}\tlength: {}\tmessage: {}\tresponding...".format(self, packet[0], len(message), message))
-                response = b" */*/* odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze"
-                self.send_data(packet[0], packet[2], message+response)
+                self.handle_new_connection(packet)
 
     def run(self):
         while self.run_event.is_set():
