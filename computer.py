@@ -33,7 +33,7 @@ class Computer(device.Device):
         new_connection = connection.Connection(None, None, port, servers[0].ip_address)
 
         # generate symmetric keys and initialization vectors
-        for i in range(3):
+        for _ in range(3):
             new_connection.symmetric_keys.append(os.urandom(16))
             new_connection.init_vectors.append(os.urandom(16))
 
