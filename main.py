@@ -1,4 +1,3 @@
-import threading
 from os import mkdir, remove
 # from shutil import rmtree
 from time import sleep
@@ -64,6 +63,3 @@ print("––––––––––––––––––TERM–––––
 
 # sleep(2)
 # rmtree("keys")
-
-run_event = threading.Event()
-run_event.set()

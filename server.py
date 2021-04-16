@@ -50,7 +50,7 @@ class Server(device.Device):
     def create_connection(self, packet):
         raw_data = packet[3]
         data = rsa_decrypt(self.private_key, raw_data).split(b"<<-<<")  # decrypt packet[3] with self.privateKey before split
-        next_port = random.randint(4000, 4294967295)
+        next_port = random.randint(4000, 65535)
         next_addr = data[0].decode()
         new_connection = connection.Connection(packet[0], packet[2], next_port, next_addr)
         new_connection.symmetric_keys.append(data[1])
@@ -58,7 +58,7 @@ class Server(device.Device):
         if all(next_addr != host.ip_address for host in self.tor_network.server_list):
             new_connection.is_end_node = True
         self.connection_list.append(new_connection)
-        device.log_write("{}:\trec/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(b"<<-<<".join(data)), b"<<-<<".join(data)))
+        device.log_write("{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(b"<<-<<".join(data)), b"<<-<<".join(data)))
 
     def forward_connection(self, current_connection, data):
         self.send_data(current_connection.dest_addr, current_connection.dest_port, data)
@@ -70,7 +70,7 @@ class Server(device.Device):
         device.log_write("{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, current_connection.dest_addr, current_connection.source_addr, len(data), data))
 
     def remove_connection(self, current_connection):
-        device.log_write("{}:\trec/rem/con from: {}\tto: {}".format(self, current_connection.source_addr, current_connection.dest_addr))
+        device.log_write("{}:\trcv/rmv/con from: {}\tto: {}".format(self, current_connection.source_addr, current_connection.dest_addr))
         self.connection_list.remove(current_connection)
 
     def buffer_check(self):

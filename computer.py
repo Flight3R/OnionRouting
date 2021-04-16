@@ -25,30 +25,34 @@ class Computer(device.Device):
         tor_network.computer_list.append(self)
 
     def connection_init(self, dest_addr):
-        port = random.randint(4000, 4294967295)
+        port = random.randint(4000, 65535)
         servers = random.sample(self.tor_network.server_list, 3)
         print("servers:", end="\t")
         [print(i, end="\t") for i in servers]
         print()
         new_connection = connection.Connection(None, None, port, servers[0].ip_address)
 
+        # generate symmetric keys and initialization vectors
         for i in range(3):
             new_connection.symmetric_keys.append(os.urandom(16))
             new_connection.init_vectors.append(os.urandom(16))
 
         self.connection_list.append(new_connection)
 
+        # initialize connection with first server
         data = b"<<-<<".join(
             [servers[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
         data = rsa_encrypt(servers[0].public_key, data)
         self.send_data(servers[0].ip_address, port, data)
 
+        # initialize connection with second server
         data = b"<<-<<".join(
             [servers[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
         data = rsa_encrypt(servers[1].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
         self.send_data(servers[0].ip_address, port, data)
 
+        # initialize connection with third server
         data = b"<<-<<".join([dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2]])
         data = rsa_encrypt(servers[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
@@ -88,12 +92,12 @@ class Computer(device.Device):
                     current_connection.data_buffer.append(message)
                 else:
                     unpadded_message = device.remove_padding(b"".join([data for data in current_connection.data_buffer] + [message])).decode()
-                    device.log_write("{}:\tresponse from: {}\tlength: {}\tmessage: {}".format(self, current_connection.dest_addr, len(unpadded_message), unpadded_message))
+                    device.log_write("{}:\treceived response from: {}\tlength: {}\tmessage: {}".format(self, current_connection.dest_addr, len(unpadded_message), unpadded_message))
                     current_connection.data_buffer = []
 
             except StopIteration:
                 message = packet[3]
-                device.log_write("{}:\tmessage from: {}\tlength: {}\tmessage: {}\tresponding...".format(self, packet[0], len(message), message))
+                device.log_write("{}:\treceived message from: {}\tlength: {}\tmessage: {}\tresponding...".format(self, packet[0], len(message), message))
                 response = b" */*/* odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze"
                 self.send_data(packet[0], packet[2], message+response)
 
