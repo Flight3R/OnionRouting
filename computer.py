@@ -40,29 +40,29 @@ class Computer(device.Device):
         self.connection_list.append(new_connection)
 
         # initialize connection with first server
-        data = b"<<-<<".join(
+        data = self.splitter.join(
             [servers[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
         data = rsa_encrypt(servers[0].public_key, data)
         self.send_data(servers[0].ip_address, port, data)
 
         # initialize connection with second server
-        data = b"<<-<<".join(
+        data = self.splitter.join(
             [servers[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
         data = rsa_encrypt(servers[1].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
         self.send_data(servers[0].ip_address, port, data)
 
         # initialize connection with third server
-        data = b"<<-<<".join([dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2]])
+        data = self.splitter.join([dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
         data = rsa_encrypt(servers[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
         self.send_data(servers[0].ip_address, port, data)
 
     def onion_message(self, current_connection, message):
-        blocks = device.packets(message.encode())
+        blocks = device.split_to_packets(message.encode())
         for i, block in enumerate(blocks):
-            self.connection_continue(current_connection, device.prepare_number(len(blocks)-i-1) + b"<<-<<" + block)
+            self.connection_continue(current_connection, device.prepare_number(len(blocks)-i-1)+self.splitter + block)
 
     def connection_continue(self, current_connection, data):
         for i in range(3)[::-1]:
@@ -85,7 +85,7 @@ class Computer(device.Device):
                 data = packet[3]
                 for i in range(3):
                     data = device.aes_decrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i], data)
-                data = data.split(b"<<-<<")
+                data = data.split(self.splitter)
                 number = data[0]
                 message = data[1]
                 if number != b"000":

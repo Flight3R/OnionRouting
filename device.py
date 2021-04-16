@@ -1,4 +1,5 @@
 import threading
+from random import randint
 from os import getcwd, path
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -25,19 +26,24 @@ def aes_decrypt(key, init_vector, encrypted):
 
 
 def test_address(address="", test_network=None):
-    addresses = address.split(".")
-    for i in addresses:
-        if int(i) < 0 or int(i) > 255:
-            print("Invalid address")
-            return "0.0.0.0"
-    for i in test_network.computer_list + test_network.server_list:
-        if i.ip_address == address:
-            print("Reused address")
-            return "0.0.0.0"
+    try:
+        if any([int(octal) < 0 or int(octal) > 255 for octal in address.split(".")]):
+            address = random_address()
+    except ValueError:
+        address = random_address()
+    while any([host.ip_address == address for host in test_network.computer_list+test_network.server_list]):
+        address = random_address()
     return address
 
 
-def packets(message):
+def random_address():
+    address = ""
+    for _ in range(4):
+        address += str(randint(0, 255)) + "."
+    return address[:-1]
+
+
+def split_to_packets(message):
     padder = padding.PKCS7(960).padder()
     padded_data = padder.update(message)
     padded_data += padder.finalize()
@@ -65,7 +71,7 @@ def remove_padding(data):
         return data
 
 
-def generate_private(name):
+def generate_private_key(name):
     # generate private key
     private_key = rsa.generate_private_key(
         public_exponent=65537,
@@ -85,7 +91,7 @@ def generate_private(name):
     return private_key
 
 
-def generate_public(name, private_key):
+def generate_public_key(name, private_key):
     # generate public key
     public_key = private_key.public_key()
 
@@ -129,12 +135,13 @@ class Device(threading.Thread):
         self.tor_network = tor_network
         self.connection_list = []
         self.buffer = []
+        self.splitter = b"<<-<<"
         try:
             self.private_key = load_private_key(self.name)
             self.public_key = load_public_key(self.name)
         except FileNotFoundError:
-            self.private_key = generate_private(self.name)
-            self.public_key = generate_public(self.name, self.private_key)
+            self.private_key = generate_private_key(self.name)
+            self.public_key = generate_public_key(self.name, self.private_key)
         self.run_event = threading.Event()
         self.run_event.set()
 

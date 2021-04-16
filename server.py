@@ -27,7 +27,7 @@ class Server(device.Device):
         if data == 128 * b"0":
             self.remove_connection(current_connection)
         elif current_connection.is_end_node:
-            parts = data.split(b"<<-<<")
+            parts = data.split(self.splitter)
             number = parts[0]
             message = parts[1]
             if number != b"000":
@@ -41,24 +41,26 @@ class Server(device.Device):
 
     def handle_backward_connection(self, current_connection, raw_data):
         if current_connection.is_end_node:
-            blocks = device.packets(raw_data)
+            blocks = device.split_to_packets(raw_data)
             for i, block in enumerate(blocks):
-                self.backward_connection(current_connection, device.prepare_number(len(blocks)-i-1) + b"<<-<<" + block)
+                self.backward_connection(current_connection, device.prepare_number(len(blocks)-i-1) + self.splitter + block)
         else:
             self.backward_connection(current_connection, raw_data)
 
     def create_connection(self, packet):
         raw_data = packet[3]
-        data = rsa_decrypt(self.private_key, raw_data).split(b"<<-<<")  # decrypt packet[3] with self.privateKey before split
+        data = rsa_decrypt(self.private_key, raw_data).split(self.splitter)  # decrypt packet[3] with self.privateKey before split
         next_port = random.randint(4000, 65535)
         next_addr = data[0].decode()
         new_connection = connection.Connection(packet[0], packet[2], next_port, next_addr)
         new_connection.symmetric_keys.append(data[1])
         new_connection.init_vectors.append(data[2])
-        if all(next_addr != host.ip_address for host in self.tor_network.server_list):
-            new_connection.is_end_node = True
+        try:
+            new_connection.is_end_node = True if data[3] == b"end" else False
+        except IndexError:
+            pass
         self.connection_list.append(new_connection)
-        device.log_write("{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(b"<<-<<".join(data)), b"<<-<<".join(data)))
+        device.log_write("{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(self.splitter.join(data)), self.splitter.join(data)))
 
     def forward_connection(self, current_connection, data):
         self.send_data(current_connection.dest_addr, current_connection.dest_port, data)
@@ -76,6 +78,8 @@ class Server(device.Device):
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
+            device.log_write("{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdest_port: {}\tdata_length: {}\traw_data: {}"
+                             .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))
                 self.handle_forward_connection(current_connection, packet[3])
