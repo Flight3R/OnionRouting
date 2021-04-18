@@ -32,12 +32,6 @@ srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
 srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
 srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
 
-torNetwork.server_list.append(srv1)
-torNetwork.server_list.append(srv2)
-torNetwork.server_list.append(srv3)
-torNetwork.server_list.append(srv4)
-torNetwork.server_list.append(srv5)
-torNetwork.server_list.append(srv6)
 
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.start()

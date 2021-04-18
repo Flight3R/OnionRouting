@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>komp.png</file>
+    <file>serwer.png</file>
+  </qresource>
+</RCC>

@@ -3,8 +3,8 @@ import random
 from time import sleep
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
-import connection
-import device
+from OnionSim import connection
+from OnionSim import device
 
 
 def rsa_encrypt(key, data):
@@ -53,7 +53,8 @@ class Computer(device.Device):
         self.send_data(servers[0].ip_address, port, data)
 
         # initialize connection with third server
-        data = self.splitter.join([dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
+        data = self.splitter.join(
+            [dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
         data = rsa_encrypt(servers[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)

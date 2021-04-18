@@ -2,8 +2,8 @@ import random
 from time import sleep
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-import connection
-import device
+from OnionSim import connection
+from OnionSim import device
 
 
 def rsa_decrypt(key, encrypted):
@@ -21,6 +21,7 @@ def rsa_decrypt(key, encrypted):
 class Server(device.Device):
     def __init__(self, name=None, ip_address=None, tor_network=None):
         super().__init__(name, ip_address, tor_network)
+        tor_network.server_list.append(self)
 
     def handle_forward_connection(self, current_connection, raw_data):
         data = device.aes_decrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], raw_data)
