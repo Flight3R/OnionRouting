@@ -2,8 +2,8 @@ import random
 from time import sleep
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-from OnionSim import connection
-from OnionSim import device
+import connection
+import device
 
 
 def rsa_decrypt(key, encrypted):

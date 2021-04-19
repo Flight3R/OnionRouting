@@ -3,9 +3,8 @@ import random
 from time import sleep
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
-from OnionSim import connection
-from OnionSim import device
-
+import connection
+import device
 
 def rsa_encrypt(key, data):
     encrypted = key.encrypt(

@@ -74,22 +74,6 @@
      </item>
     </layout>
    </widget>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>390</x>
-      <y>190</y>
-      <width>70</width>
-      <height>70</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="pixmap">
-     <pixmap resource="image.qrc">:/newPrefix/komp.png</pixmap>
-    </property>
-   </widget>
    <widget class="QPushButton" name="removeButton">
     <property name="geometry">
      <rect>
@@ -327,7 +311,7 @@
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="listButtonGroup"/>
   <buttongroup name="createButtonGroup"/>
+  <buttongroup name="listButtonGroup"/>
  </buttongroups>
 </ui>

@@ -11,10 +11,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from os import mkdir
 from shutil import rmtree
-from time import sleep
-from OnionSim import computer
-from OnionSim import server
-from OnionSim import tor_network
+import computer
+import server
+import tor_network
 
 try:
     mkdir("keys")
@@ -41,32 +40,8 @@ srv3 = server.Server("SRV3", "33.33.33.33", torNetwork)
 srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
 srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
 srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
-
-
-for host in torNetwork.server_list + torNetwork.computer_list:
-    host.start()
-
-print("––––––––––––––––––CONN INIT––––––––––––––––––––")
-pc1.connection_init("04.03.02.01")
-
-sleep(1)
-
-print("––––––––––––––––––MSG SENT––––––––––––––––––––")
-MESSAGE = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero."
-pc1.onion_message(pc1.connection_list[0], MESSAGE)
-
-sleep(1)
-
-print("––––––––––––––––––CONN FIN––––––––––––––––––––")
-pc1.connection_finalize(pc1.connection_list[0])
-
-sleep(1)
-
-for host in torNetwork.server_list + torNetwork.computer_list:
-    host.run_event.clear()
-    host.join()
-
-print("––––––––––––––––––TERM––––––––––––––––––––––––")
+rmtree("keys")
+rmtree("logs")
 
 
 class Ui_MainWindow(object):
@@ -74,22 +49,17 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1602, 1003)
         MainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
-
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setEnabled(True)
         self.centralwidget.setObjectName("centralwidget")
-
         self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 121, 71))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
-
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-
         self.computerListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.computerListButton.setObjectName("computerListButton")
-        self.computerListButton.setChecked(True)
         self.listButtonGroup = QtWidgets.QButtonGroup(MainWindow)
         self.listButtonGroup.setObjectName("listButtonGroup")
         self.listButtonGroup.addButton(self.computerListButton)
@@ -98,28 +68,18 @@ class Ui_MainWindow(object):
         self.serverListButton.setObjectName("serverListButton")
         self.listButtonGroup.addButton(self.serverListButton)
         self.verticalLayout.addWidget(self.serverListButton)
-
         self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
         self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(120, 0, 141, 71))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-
         self.label = QtWidgets.QLabel(self.verticalLayoutWidget_2)
         self.label.setObjectName("label")
         self.verticalLayout_2.addWidget(self.label)
         self.listComboBox = QtWidgets.QComboBox(self.verticalLayoutWidget_2)
         self.listComboBox.setObjectName("listComboBox")
         self.verticalLayout_2.addWidget(self.listComboBox)
-        for i in torNetwork.computer_list:
-            self.listComboBox.addItem(i.name)
-
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(390, 190, 70, 70))
-        self.label_2.setText("")
-        self.label_2.setPixmap(QtGui.QPixmap(":/newPrefix/komp.png"))
-        self.label_2.setObjectName("label_2")
         self.removeButton = QtWidgets.QPushButton(self.centralwidget)
         self.removeButton.setGeometry(QtCore.QRect(0, 70, 261, 81))
         font = QtGui.QFont()
@@ -195,6 +155,9 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
+        self.computerListButton.clicked.connect(lambda: self.clickedComputerListButton(torNetwork))
+        self.serverListButton.clicked.connect(lambda: self.clickedServerListButton(torNetwork))
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -216,10 +179,20 @@ class Ui_MainWindow(object):
         self.terminal.setText(_translate("MainWindow", "terminal"))
         self.terminalEnterButton.setText(_translate("MainWindow", "Enter"))
 
-    def listButtonClicked(self, torNetwork=None):
-        for i in torNetwork.computer_list:
-            self.listComboBox.addItem(i.name)
 
+    def princik(self):
+        print("Hello")
+
+
+    def clickedComputerListButton(self, torNetwork=None):
+        self.listComboBox.clear()
+        for pc in torNetwork.computer_list:
+            self.listComboBox.addItem(pc.name)
+
+    def clickedServerListButton(self, torNetwork=None):
+        self.listComboBox.clear()
+        for serv in torNetwork.server_list:
+            self.listComboBox.addItem(serv.name)
 
 
 if __name__ == "__main__":
