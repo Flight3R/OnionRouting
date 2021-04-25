@@ -61,25 +61,25 @@ class Server(device.Device):
         except IndexError:
             pass
         self.connection_list.append(new_connection)
-        device.log_write("console", "{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(self.splitter.join(data)), self.splitter.join(data)))
+        self.log_write("console", "{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(self.splitter.join(data)), self.splitter.join(data)))
 
     def forward_connection(self, current_connection, data):
         self.send_data(current_connection.dest_addr, current_connection.dest_port, data)
-        device.log_write("console", "{}:\tsnd/fwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, current_connection.source_addr, current_connection.dest_addr, len(data), data))
+        self.log_write("console", "{}:\tsnd/fwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, current_connection.source_addr, current_connection.dest_addr, len(data), data))
 
     def backward_connection(self, current_connection, data):
         data = device.aes_encrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], data)
         self.send_data(current_connection.source_addr, current_connection.source_port, data)
-        device.log_write("console", "{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, current_connection.dest_addr, current_connection.source_addr, len(data), data))
+        self.log_write("console", "{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, current_connection.dest_addr, current_connection.source_addr, len(data), data))
 
     def remove_connection(self, current_connection):
-        device.log_write("console", "{}:\trcv/rmv/con from: {}\tto: {}".format(self, current_connection.source_addr, current_connection.dest_addr))
+        self.log_write("console", "{}:\trcv/rmv/con from: {}\tto: {}".format(self, current_connection.source_addr, current_connection.dest_addr))
         self.connection_list.remove(current_connection)
 
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
-            device.log_write("sniff", "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdest_port: {}\tdata_length: {}\traw_data: {}"
+            self.log_write("sniff", "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdest_port: {}\tdata_length: {}\traw_data: {}"
                              .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))

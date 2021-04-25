@@ -7,14 +7,6 @@ from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
-def log_write(file, log_message):
-    if file == "console":
-        print(log_message)
-    with open(path.join(getcwd(), "logs", file + "_logs.txt"), "a+") as file:
-            file.write(log_message)
-            file.write("\n")
-
-
 def aes_encrypt(key, init_vector, data):
     cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector))
     encryptor = cipher.encryptor()
@@ -73,7 +65,6 @@ def remove_padding(data):
 
 
 def generate_private_key(name):
-    # generate private key
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=1024,
@@ -93,7 +84,6 @@ def generate_private_key(name):
 
 
 def generate_public_key(name, private_key):
-    # generate public key
     public_key = private_key.public_key()
 
     pem = public_key.public_bytes(
@@ -102,6 +92,7 @@ def generate_public_key(name, private_key):
     )
     public_filename = name + "_public_key.txt"
     keys_path = path.join(getcwd(), "keys", public_filename)
+    # writing key to the file
     with open(keys_path, "wb") as file:
         file.write(pem)
     return public_key
@@ -129,7 +120,7 @@ def load_public_key(name):
 
 
 class Device(threading.Thread):
-    def __init__(self, name=None, ip_address=None, tor_network=None):
+    def __init__(self, name="None", ip_address="None", tor_network=None):
         threading.Thread.__init__(self)
         self.name = name
         self.ip_address = test_address(ip_address, tor_network)
@@ -152,6 +143,65 @@ class Device(threading.Thread):
             if dest_addr == host.ip_address:
                 host.buffer.append(packet)
                 break
+
+    def log_write(self, file_type, log_message):
+        if file_type == "console":
+            print(log_message)
+        with open(path.join(getcwd(), "logs", file_type + "_logs.txt"), "a+") as file:
+            file.write(log_message)
+            file.write("\n")
+        with open(path.join(getcwd(), "logs", file_type + "_" + self.name + "_logs.txt"), "a+") as file:
+            file.write(log_message)
+            file.write("\n")
+
+    def execute_command(self, line):
+        commands = iter(line.split(" "))
+        current = next(commands)
+        if current == "show":
+            return self.show_command(commands)
+        return "Unknown command! Available: show, onion, message\n"
+
+    def show_command(self, commands):
+        try:
+            current = next(commands)
+            if current == "address":
+                return self.ip_address
+            if current == "servers":
+                return self.get_servers()
+            if current == "connection":
+                return self.get_connection(commands)
+            if current == "logs":
+                return self.get_logs()
+            return "Unknown command! Available: init, message, finalize\n"
+        except StopIteration:
+            pass
+
+    def get_servers(self):
+        result = ""
+        for server in self.tor_network.server_list:
+            result += server.ip_address + "\n"
+        return result
+
+    def get_connection(self, commands):
+        try:
+            conn_number = next(commands)
+            try:
+                return self.connection_list[int(conn_number)].get_detail()
+            except ValueError or IndexError:
+                return "No such connection!\n"
+        except StopIteration:
+            result = ""
+            for i, conn in enumerate(self.connection_list):
+                result += "{}\t{}\n".format(i, conn.get_brief())
+            return result
+
+    def get_logs(self):
+        try:
+            with open(path.join(getcwd(), "logs", "sniff_" + self.name + "_logs.txt"), "r") as file:
+                result = file.read()
+            return result
+        except FileNotFoundError:
+            return "No such file!\n"
 
     def __str__(self):
         return self.name + "[" + self.ip_address + "]"
