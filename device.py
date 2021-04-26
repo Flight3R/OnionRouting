@@ -1,4 +1,5 @@
 import threading
+from re import findall
 from random import randint
 from os import getcwd, path
 from cryptography.hazmat.backends import default_backend
@@ -119,6 +120,15 @@ def load_public_key(name):
     return public_key
 
 
+def parse_command_line(line):
+    try:
+        typo = findall("\".*\"", line)[0]
+        arg_list = line.removesuffix(" "+typo).split(" ") + [typo[1:-1]]
+    except IndexError:
+        return line.removesuffix(" ").split(" ")
+    return arg_list
+
+
 class Device(threading.Thread):
     def __init__(self, name="None", ip_address="None", tor_network=None):
         threading.Thread.__init__(self)
@@ -155,26 +165,26 @@ class Device(threading.Thread):
             file.write("\n")
 
     def execute_command(self, line):
-        commands = iter(line.split(" "))
+        commands = iter(parse_command_line(line))
         current = next(commands)
         if current == "show":
             return self.show_command(commands)
-        return "Unknown command! Available: show, onion, message\n"
+        return "Unknown command! Available: show\n"
 
     def show_command(self, commands):
         try:
             current = next(commands)
-            if current == "address":
-                return self.ip_address
-            if current == "servers":
-                return self.get_servers()
-            if current == "connection":
-                return self.get_connection(commands)
-            if current == "logs":
-                return self.get_logs()
-            return "Unknown command! Available: init, message, finalize\n"
         except StopIteration:
-            pass
+            return ">>> address, servers, connections, logs\n"
+        if current == "address":
+            return self.ip_address
+        if current == "servers":
+            return self.get_servers()
+        if current == "connections":
+            return self.get_connection(commands)
+        if current == "logs":
+            return self.get_logs(commands)
+        return "Unknown command! Available: address, servers, connections, logs\n"
 
     def get_servers(self):
         result = ""
@@ -195,7 +205,11 @@ class Device(threading.Thread):
                 result += "{}\t{}\n".format(i, conn.get_brief())
             return result
 
-    def get_logs(self):
+    def get_logs(self, commands):
+        try:
+            current = next(commands)
+        except StopIteration:
+            return "\n"
         try:
             with open(path.join(getcwd(), "logs", "sniff_" + self.name + "_logs.txt"), "r") as file:
                 result = file.read()

@@ -118,7 +118,7 @@ class Computer(device.Device):
                 self.handle_new_connection(packet)
 
     def execute_command(self, line):
-        commands = iter(line.split(" "))
+        commands = iter(device.parse_command_line(line))
         current = next(commands)
         if current == "show":
             return self.show_command(commands)
@@ -129,50 +129,55 @@ class Computer(device.Device):
         return "Unknown command! Available: show, onion, message\n"
 
     def onion_command(self, commands):
+        syntax = "Syntax: onion {init|message|finalize}\n"
         try:
             current = next(commands)
-            if current == "init":
-                return self.init_command(commands)
-            if current == "message":
-                return self.message_command(commands)
-            if current == "finalize":
-                return self.finalize_command(commands)
-            return "Unknown command! Available: init, message, finalize\n"
         except StopIteration:
-            pass
+            return syntax
+        if current == "init":
+            return self.init_command(commands)
+        if current == "message":
+            return self.message_command(commands)
+        if current == "finalize":
+            return self.finalize_command(commands)
+        return "Unknown command!" + syntax
 
     def init_command(self, commands):
+        syntax = "Syntax: onion init <pc_ip_address>\n"
         try:
             address = next(commands)
-            self.connection_init(address)
-            return "Initialization sent.\n"
         except StopIteration:
-            return "Destination address needed!\n"
+            return syntax
+        if address in [srv.ip_address for srv in self.tor_network.server_list]:
+            return "Not an PC address!" + syntax
+        self.connection_init(address)
+        return "Initialization sent.\n"
 
     def message_command(self, commands):
         try:
             number = next(commands)
             message = next(commands)
         except StopIteration:
-            return "Connection number and message needed!\n"
+            return 'Syntax: onion message <number> "<message_text>"\n'
         try:
             conn = self.connection_list[int(number)]
             self.onion_message(conn, message)
             return "Message sent.\n"
-        except ValueError or IndexError:
+        except IndexError or ValueError:
             return "No such connection!\n"
 
     def finalize_command(self, commands):
+        syntax = "Syntax: onion finalize <number>\n"
         try:
             number = next(commands)
         except StopIteration:
-            return "Connection number needed!\n"
+            return syntax
         try:
             conn = self.connection_list[int(number)]
             self.connection_finalize(conn)
             return "Connection finalized.\n"
-        except ValueError or IndexError:
-            return "No such connection!\n"
+        except IndexError or ValueError:
+            return "No such connection!" + syntax
 
     def run(self):
         while self.run_event.is_set():

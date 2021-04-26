@@ -32,49 +32,19 @@ srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
 srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
 srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
 
-if (False): # pzdr zielu
-    for host in torNetwork.server_list + torNetwork.computer_list:
-        host.start()
+for host in torNetwork.server_list + torNetwork.computer_list:
+    host.start()
+sleep(1)
+print(pc1.execute_command("onion init 22.22.22.22"))
+sleep(1)
+print(pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
+sleep(1)
+print(pc1.execute_command("onion finalize 0"))
+sleep(1)
 
-    print("––––––––––––––––––CONN INIT––––––––––––––––––––")
-    pc1.connection_init("04.03.02.01")
+for host in torNetwork.server_list + torNetwork.computer_list:
+    host.run_event.clear()
+    host.join()
 
-    sleep(1)
-
-    print("––––––––––––––––––MSG SENT––––––––––––––––––––")
-    MESSAGE = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero."
-    pc1.onion_message(pc1.connection_list[0], MESSAGE)
-
-    sleep(1)
-
-    print("––––––––––––––––––CONN FIN––––––––––––––––––––")
-    pc1.connection_finalize(pc1.connection_list[0])
-
-    sleep(1)
-
-    for host in torNetwork.server_list + torNetwork.computer_list:
-        host.run_event.clear()
-        host.join()
-
-    print("––––––––––––––––––TERM––––––––––––––––––––––––")
-else:
-    for host in torNetwork.server_list + torNetwork.computer_list:
-        host.start()
-    sleep(1)
-
-    # print(pc1.execute_command("onion init 04.03.02.01"))
-    print(pc1.execute_command("onion init 11.22.33.44"))
-    print(pc1.execute_command("onion message 0 siema_eniu_pzdr_600"))
-    sleep(1)
-    print(srv6.execute_command("show connection"))
-    # print(pc1.execute_command("show address"))
-    # print(pc1.execute_command("show servers"))
-    # print(pc1.execute_command("show connection 1"))
-    # print(pc1.execute_command("show logs"))
-
-    #
-    # for host in torNetwork.server_list + torNetwork.computer_list:
-    #     host.run_event.clear()
-    #     host.join()
 # sleep(2)
 # rmtree("keys")
