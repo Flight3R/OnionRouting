@@ -118,6 +118,7 @@ class Computer(device.Device):
                 self.handle_new_connection(packet)
 
     def execute_command(self, line):
+        self.log_write("console", "{}$>>\t{}".format(str(self), line))
         commands = iter(device.parse_command_line(line))
         current = next(commands)
         if current == "show":
@@ -126,7 +127,9 @@ class Computer(device.Device):
             return self.onion_command(commands)
         if current == "message":
             return self.message_command(commands)
-        return "Unknown command! Available: show, onion, message\n"
+        if current == "change":
+            return self.change_command(commands)
+        return "Unknown command! Available: show, onion, message, change\n"
 
     def onion_command(self, commands):
         syntax = "Syntax: onion {init|message|finalize}\n"
@@ -140,7 +143,7 @@ class Computer(device.Device):
             return self.message_command(commands)
         if current == "finalize":
             return self.finalize_command(commands)
-        return "Unknown command!" + syntax
+        return "Unknown command! " + syntax
 
     def init_command(self, commands):
         syntax = "Syntax: onion init <pc_ip_address>\n"
@@ -148,8 +151,8 @@ class Computer(device.Device):
             address = next(commands)
         except StopIteration:
             return syntax
-        if address in [srv.ip_address for srv in self.tor_network.server_list]:
-            return "Not an PC address!" + syntax
+        if not device.check_address_correctness(address) or address in [srv.ip_address for srv in self.tor_network.server_list]:
+            return "Not a valid PC address! " + syntax
         self.connection_init(address)
         return "Initialization sent.\n"
 
@@ -177,7 +180,7 @@ class Computer(device.Device):
             self.connection_finalize(conn)
             return "Connection finalized.\n"
         except IndexError or ValueError:
-            return "No such connection!" + syntax
+            return "No such connection! " + syntax
 
     def run(self):
         while self.run_event.is_set():

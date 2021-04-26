@@ -19,15 +19,20 @@ def aes_decrypt(key, init_vector, encrypted):
     return cipher.decryptor().update(encrypted)
 
 
-def test_address(address="", test_network=None):
-    try:
-        if any([int(octal) < 0 or int(octal) > 255 for octal in address.split(".")]):
-            address = random_address()
-    except ValueError:
+def validate_address(address, network):
+    if not check_address_correctness(address):
         address = random_address()
-    while any([host.ip_address == address for host in test_network.computer_list+test_network.server_list]):
+    while not network.allow_address(address):
         address = random_address()
     return address
+
+
+def check_address_correctness(address):
+    try:
+        is_correct = not any([int(octal) < 0 or int(octal) > 255 for octal in address.split(".")])
+        return is_correct
+    except ValueError:
+        return False
 
 
 def random_address():
@@ -123,9 +128,9 @@ def load_public_key(name):
 def parse_command_line(line):
     try:
         typo = findall("\".*\"", line)[0]
-        arg_list = line.removesuffix(" "+typo).split(" ") + [typo[1:-1]]
+        arg_list = line.removesuffix(typo).strip(" ").split(" ") + [typo[1:-1]]
     except IndexError:
-        return line.removesuffix(" ").split(" ")
+        return line.strip(" ").split(" ")
     return arg_list
 
 
@@ -133,7 +138,7 @@ class Device(threading.Thread):
     def __init__(self, name="None", ip_address="None", tor_network=None):
         threading.Thread.__init__(self)
         self.name = name
-        self.ip_address = test_address(ip_address, tor_network)
+        self.ip_address = validate_address(ip_address, tor_network)
         self.tor_network = tor_network
         self.connection_list = []
         self.buffer = []
@@ -165,17 +170,52 @@ class Device(threading.Thread):
             file.write("\n")
 
     def execute_command(self, line):
+        self.log_write("console", "{}$>>\t{}".format(str(self), line))
         commands = iter(parse_command_line(line))
         current = next(commands)
         if current == "show":
             return self.show_command(commands)
-        return "Unknown command! Available: show\n"
+        if current == "change":
+            return self.change_command(commands)
+        return "Unknown command! Available: show, change\n"
 
-    def show_command(self, commands):
+    def change_command(self, commands):
+        syntax = "Syntax: change {name|address}\n"
         try:
             current = next(commands)
         except StopIteration:
-            return ">>> address, servers, connections, logs\n"
+            return syntax
+        if current == "name":
+            return self.change_name(commands)
+        if current == "address":
+            return self.change_address(commands)
+        return "Unknown command! " + syntax
+
+    def change_name(self, commands):
+        syntax = "Syntax: change name <new_name>\n"
+        try:
+            current = next(commands)
+        except StopIteration:
+            return syntax
+        self.name = current
+        return "Name changed."
+
+    def change_address(self, commands):
+        syntax = "Syntax: change ip <new_address>\n"
+        try:
+            current = next(commands)
+        except StopIteration:
+            return syntax
+        if check_address_correctness(current) and self.tor_network.allow_address(current):
+            return "Address changed."
+        return "Not a valid address!"
+
+    def show_command(self, commands):
+        syntax = "Syntax: show {address|servers|connections|logs}\n"
+        try:
+            current = next(commands)
+        except StopIteration:
+            return syntax
         if current == "address":
             return self.ip_address
         if current == "servers":
@@ -184,7 +224,7 @@ class Device(threading.Thread):
             return self.get_connection(commands)
         if current == "logs":
             return self.get_logs(commands)
-        return "Unknown command! Available: address, servers, connections, logs\n"
+        return "Unknown command! " + syntax
 
     def get_servers(self):
         result = ""
