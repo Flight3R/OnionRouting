@@ -1,4 +1,5 @@
 import threading
+from time import sleep
 from re import findall
 from random import randint
 from os import getcwd, path
@@ -20,16 +21,16 @@ def aes_decrypt(key, init_vector, encrypted):
 
 
 def validate_address(address, network):
-    if not check_address_correctness(address):
+    if not check_address_octets(address):
         address = random_address()
     while not network.allow_address(address):
         address = random_address()
     return address
 
 
-def check_address_correctness(address):
+def check_address_octets(address):
     try:
-        is_correct = not any([int(octal) < 0 or int(octal) > 255 for octal in address.split(".")])
+        is_correct = not any([int(octet) < 0 or int(octet) > 255 for octet in address.split(".")])
         return is_correct
     except ValueError:
         return False
@@ -192,21 +193,19 @@ class Device(threading.Thread):
         return "Unknown command! " + syntax
 
     def change_name(self, commands):
-        syntax = "Syntax: change name <new_name>\n"
         try:
             current = next(commands)
         except StopIteration:
-            return syntax
+            return "Syntax: change name <new_name>\n"
         self.name = current
         return "Name changed."
 
     def change_address(self, commands):
-        syntax = "Syntax: change ip <new_address>\n"
         try:
             current = next(commands)
         except StopIteration:
-            return syntax
-        if check_address_correctness(current) and self.tor_network.allow_address(current):
+            return "Syntax: change ip <new_address>\n"
+        if check_address_octets(current) and self.tor_network.allow_address(current):
             return "Address changed."
         return "Not a valid address!"
 
@@ -246,16 +245,27 @@ class Device(threading.Thread):
             return result
 
     def get_logs(self, commands):
+        syntax = "Syntax: show logs {console|sniff}\n"
         try:
             current = next(commands)
         except StopIteration:
-            return "\n"
+            return syntax
         try:
-            with open(path.join(getcwd(), "logs", "sniff_" + self.name + "_logs.txt"), "r") as file:
-                result = file.read()
-            return result
+            if current == "console" or current == "sniff":
+                with open(path.join(getcwd(), "logs", current + "_" + self.name + "_logs.txt"), "r") as file:
+                    result = file.read()
+                return result
+            return "Unknown command! " + syntax
         except FileNotFoundError:
-            return "No such file!\n"
+            return "There are no logs.\n"
 
     def __str__(self):
         return self.name + "[" + self.ip_address + "]"
+
+    def buffer_check(self):
+        pass
+
+    def run(self):
+        while self.run_event.is_set():
+            self.buffer_check()
+            sleep(0.1)

@@ -23,4 +23,3 @@ class Connection:
             result += str(vector) + "\n"
         result += "is_end_node? {}\n".format(self.is_end_node)
         return result
-

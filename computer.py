@@ -1,6 +1,5 @@
 import os
 import random
-from time import sleep
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
 import connection
@@ -32,27 +31,27 @@ class Computer(device.Device):
         print()
         new_connection = connection.Connection(servers[0].ip_address, port, None, dest_addr)
 
-        # generate symmetric keys and initialization vectors
+        """ generate symmetric keys and initialization vectors """
         for _ in range(3):
             new_connection.symmetric_keys.append(os.urandom(16))
             new_connection.init_vectors.append(os.urandom(16))
 
         self.connection_list.append(new_connection)
 
-        # initialize connection with first server
+        """ initialize connection with first server """
         data = self.splitter.join(
             [servers[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
         data = rsa_encrypt(servers[0].public_key, data)
         self.send_data(servers[0].ip_address, port, data)
 
-        # initialize connection with second server
+        """ initialize connection with second server """
         data = self.splitter.join(
             [servers[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
         data = rsa_encrypt(servers[1].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
         self.send_data(servers[0].ip_address, port, data)
 
-        # initialize connection with third server
+        """ initialize connection with third server """
         data = self.splitter.join(
             [dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
         data = rsa_encrypt(servers[2].public_key, data)
@@ -82,8 +81,11 @@ class Computer(device.Device):
 
     def handle_self_connection(self, current_connection, raw_data):
         for i in range(3):
-            raw_data = device.aes_decrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i],
-                                          raw_data)
+            try:
+                raw_data = device.aes_decrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i],
+                                              raw_data)
+            except ValueError:
+                return
         data = raw_data.split(self.splitter)
         number = data[0]
         message = data[1]
@@ -108,7 +110,7 @@ class Computer(device.Device):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
             self.log_write("sniff",
-                           "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdest_port: {}\tdata_length: {}\traw_data: {}"
+                           "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdst_port: {}\tdata_length: {}\traw_data: {}"
                            .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))
@@ -151,7 +153,8 @@ class Computer(device.Device):
             address = next(commands)
         except StopIteration:
             return syntax
-        if not device.check_address_correctness(address) or address in [srv.ip_address for srv in self.tor_network.server_list]:
+        if not device.check_address_octets(address) or address in [srv.ip_address for srv in
+                                                                   self.tor_network.server_list]:
             return "Not a valid PC address! " + syntax
         self.connection_init(address)
         return "Initialization sent.\n"
@@ -181,8 +184,3 @@ class Computer(device.Device):
             return "Connection finalized.\n"
         except IndexError or ValueError:
             return "No such connection! " + syntax
-
-    def run(self):
-        while self.run_event.is_set():
-            self.buffer_check()
-            sleep(0.1)
