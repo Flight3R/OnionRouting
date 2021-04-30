@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from os import mkdir
 from shutil import rmtree
+import device
 import computer
 import server
 import tor_network
@@ -26,6 +27,7 @@ except FileNotFoundError:
     pass
 
 mkdir("logs")
+
 
 torNetwork = tor_network.TorNetwork([], [])
 
@@ -59,13 +61,13 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.computerListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.computerListButton.setObjectName("computerListButton")
-        self.listButtonGroup = QtWidgets.QButtonGroup(MainWindow)
-        self.listButtonGroup.setObjectName("listButtonGroup")
-        self.listButtonGroup.addButton(self.computerListButton)
+        self.devicesGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.devicesGroup.setObjectName("devicesGroup")
+        self.devicesGroup.addButton(self.computerListButton)
         self.verticalLayout.addWidget(self.computerListButton)
         self.serverListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.serverListButton.setObjectName("serverListButton")
-        self.listButtonGroup.addButton(self.serverListButton)
+        self.devicesGroup.addButton(self.serverListButton)
         self.verticalLayout.addWidget(self.serverListButton)
         self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
         self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(120, 0, 141, 71))
@@ -79,15 +81,15 @@ class Ui_MainWindow(object):
         self.listComboBox = QtWidgets.QComboBox(self.verticalLayoutWidget_2)
         self.listComboBox.setObjectName("listComboBox")
         self.verticalLayout_2.addWidget(self.listComboBox)
-        self.removeButton = QtWidgets.QPushButton(self.centralwidget)
-        self.removeButton.setGeometry(QtCore.QRect(0, 70, 261, 81))
+        self.removeDeviceButton = QtWidgets.QPushButton(self.centralwidget)
+        self.removeDeviceButton.setGeometry(QtCore.QRect(0, 70, 261, 81))
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.removeButton.setFont(font)
-        self.removeButton.setObjectName("removeButton")
+        self.removeDeviceButton.setFont(font)
+        self.removeDeviceButton.setObjectName("removeDeviceButton")
         self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.groupBox.setGeometry(QtCore.QRect(0, 150, 261, 811))
-        self.groupBox.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.groupBox.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.groupBox.setObjectName("groupBox")
         self.label_3 = QtWidgets.QLabel(self.groupBox)
         self.label_3.setGeometry(QtCore.QRect(0, 150, 261, 41))
@@ -96,9 +98,9 @@ class Ui_MainWindow(object):
         self.label_3.setFont(font)
         self.label_3.setAlignment(QtCore.Qt.AlignCenter)
         self.label_3.setObjectName("label_3")
-        self.lineEdit = QtWidgets.QLineEdit(self.groupBox)
-        self.lineEdit.setGeometry(QtCore.QRect(0, 190, 261, 41))
-        self.lineEdit.setObjectName("lineEdit")
+        self.nameEdit = QtWidgets.QLineEdit(self.groupBox)
+        self.nameEdit.setGeometry(QtCore.QRect(0, 190, 261, 41))
+        self.nameEdit.setObjectName("nameEdit")
         self.label_4 = QtWidgets.QLabel(self.groupBox)
         self.label_4.setGeometry(QtCore.QRect(0, 230, 261, 41))
         font = QtGui.QFont()
@@ -106,9 +108,9 @@ class Ui_MainWindow(object):
         self.label_4.setFont(font)
         self.label_4.setAlignment(QtCore.Qt.AlignCenter)
         self.label_4.setObjectName("label_4")
-        self.lineEdit_2 = QtWidgets.QLineEdit(self.groupBox)
-        self.lineEdit_2.setGeometry(QtCore.QRect(0, 270, 261, 41))
-        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.addressEdit = QtWidgets.QLineEdit(self.groupBox)
+        self.addressEdit.setGeometry(QtCore.QRect(0, 270, 261, 41))
+        self.addressEdit.setObjectName("addressEdit")
         self.label_5 = QtWidgets.QLabel(self.groupBox)
         self.label_5.setGeometry(QtCore.QRect(0, 30, 261, 41))
         font = QtGui.QFont()
@@ -122,19 +124,42 @@ class Ui_MainWindow(object):
         self.createButtonGroup = QtWidgets.QButtonGroup(MainWindow)
         self.createButtonGroup.setObjectName("createButtonGroup")
         self.createButtonGroup.addButton(self.createServerButton)
-        self.radioButton_2 = QtWidgets.QRadioButton(self.groupBox)
-        self.radioButton_2.setGeometry(QtCore.QRect(0, 110, 261, 41))
-        self.radioButton_2.setObjectName("radioButton_2")
-        self.createButtonGroup.addButton(self.radioButton_2)
+        self.createComputerButton = QtWidgets.QRadioButton(self.groupBox)
+        self.createComputerButton.setGeometry(QtCore.QRect(0, 110, 261, 41))
+        self.createComputerButton.setObjectName("createComputerButton")
+        self.createButtonGroup.addButton(self.createComputerButton)
         self.createButton = QtWidgets.QPushButton(self.groupBox)
         self.createButton.setGeometry(QtCore.QRect(0, 350, 261, 91))
         font = QtGui.QFont()
         font.setPointSize(14)
         self.createButton.setFont(font)
         self.createButton.setObjectName("createButton")
-        self.randomAddress = QtWidgets.QPushButton(self.groupBox)
-        self.randomAddress.setGeometry(QtCore.QRect(0, 310, 261, 41))
-        self.randomAddress.setObjectName("randomAddress")
+        self.randomAddressButton = QtWidgets.QPushButton(self.groupBox)
+        self.randomAddressButton.setGeometry(QtCore.QRect(0, 310, 261, 41))
+        self.randomAddressButton.setObjectName("randomAddressButton")
+        self.label_6 = QtWidgets.QLabel(self.groupBox)
+        self.label_6.setGeometry(QtCore.QRect(0, 440, 261, 41))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.label_6.setFont(font)
+        self.label_6.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_6.setObjectName("label_6")
+        self.onThreadButton = QtWidgets.QRadioButton(self.groupBox)
+        self.onThreadButton.setGeometry(QtCore.QRect(0, 480, 261, 41))
+        self.onThreadButton.setObjectName("onThreadButton")
+        self.threadsGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.threadsGroup.setObjectName("threadsGroup")
+        self.threadsGroup.addButton(self.onThreadButton)
+        self.offThreadButton = QtWidgets.QRadioButton(self.groupBox)
+        self.offThreadButton.setGeometry(QtCore.QRect(0, 520, 261, 41))
+        self.offThreadButton.setObjectName("offThreadButton")
+        self.threadsGroup.addButton(self.offThreadButton)
+        self.stepButton = QtWidgets.QPushButton(self.groupBox)
+        self.stepButton.setGeometry(QtCore.QRect(0, 560, 261, 91))
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.stepButton.setFont(font)
+        self.stepButton.setObjectName("stepButton")
         self.terminalEntry = QtWidgets.QListView(self.centralwidget)
         self.terminalEntry.setGeometry(QtCore.QRect(260, 30, 1341, 121))
         self.terminalEntry.setStyleSheet("")
@@ -144,6 +169,7 @@ class Ui_MainWindow(object):
         self.terminal.setObjectName("terminal")
         self.terminalEnterButton = QtWidgets.QPushButton(self.centralwidget)
         self.terminalEnterButton.setGeometry(QtCore.QRect(1510, 0, 91, 31))
+        self.terminalEnterButton.setMinimumSize(QtCore.QSize(91, 31))
         self.terminalEnterButton.setObjectName("terminalEnterButton")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -156,6 +182,9 @@ class Ui_MainWindow(object):
 
         self.computerListButton.clicked.connect(lambda: self.clickedComputerListButton(torNetwork))
         self.serverListButton.clicked.connect(lambda: self.clickedServerListButton(torNetwork))
+        self.randomAddressButton.clicked.connect(lambda: self.randomAddress(device.random_address()))
+        self.createButton.clicked.connect(lambda: self.createNewDevice(self.nameEdit.text(),
+                                                                       self.addressEdit.text(), torNetwork))
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -166,20 +195,21 @@ class Ui_MainWindow(object):
         self.computerListButton.setText(_translate("MainWindow", "Computers\' list"))
         self.serverListButton.setText(_translate("MainWindow", "Servers\' list"))
         self.label.setText(_translate("MainWindow", "Computer/Server List"))
-        self.removeButton.setText(_translate("MainWindow", "Remove chosen device"))
+        self.removeDeviceButton.setText(_translate("MainWindow", "Remove chosen device"))
         self.groupBox.setTitle(_translate("MainWindow", "Add new device"))
         self.label_3.setText(_translate("MainWindow", "Name:"))
-        self.label_4.setText(_translate("MainWindow", "IP Adress:"))
+        self.label_4.setText(_translate("MainWindow", "IP Address:"))
         self.label_5.setText(_translate("MainWindow", "Choose device:"))
         self.createServerButton.setText(_translate("MainWindow", "Server"))
-        self.radioButton_2.setText(_translate("MainWindow", "Computer"))
+        self.createComputerButton.setText(_translate("MainWindow", "Computer"))
         self.createButton.setText(_translate("MainWindow", "Create new device"))
-        self.randomAddress.setText(_translate("MainWindow", "Random address"))
+        self.randomAddressButton.setText(_translate("MainWindow", "Random address"))
+        self.label_6.setText(_translate("MainWindow", "Threads"))
+        self.onThreadButton.setText(_translate("MainWindow", "ON"))
+        self.offThreadButton.setText(_translate("MainWindow", "OFF"))
+        self.stepButton.setText(_translate("MainWindow", "STEP"))
         self.terminal.setText(_translate("MainWindow", "terminal"))
         self.terminalEnterButton.setText(_translate("MainWindow", "Enter"))
-
-    def princik(self):
-        print("Hello")
 
     def clickedComputerListButton(self, torNetwork=None):
         self.listComboBox.clear()
@@ -191,10 +221,20 @@ class Ui_MainWindow(object):
         for serv in torNetwork.server_list:
             self.listComboBox.addItem(serv.name)
 
+    def createNewDevice(self, name=None, ip_address=None, torNetwork=None):
+        #properValues = name and ip_address and torNetwork
+        #if name and ip_address and torNetwork and self.createServerButton.isChecked():
+        x = server.Server(name, ip_address, tor_network)
+        #elif name and ip_address and torNetwork and self.createComputerButton.isChecked():
+           # x = computer.Computer(name, ip_address, tor_network)
+
+    def randomAddress(self, address=None):
+        self.addressEdit.setText(address)
+
+
 
 if __name__ == "__main__":
     import sys
-
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()

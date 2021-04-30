@@ -36,7 +36,7 @@
         <string>Computers' list</string>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">listButtonGroup</string>
+        <string notr="true">devicesGroup</string>
        </attribute>
       </widget>
      </item>
@@ -46,7 +46,7 @@
         <string>Servers' list</string>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">listButtonGroup</string>
+        <string notr="true">devicesGroup</string>
        </attribute>
       </widget>
      </item>
@@ -74,7 +74,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="removeButton">
+   <widget class="QPushButton" name="removeDeviceButton">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -128,7 +128,7 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit">
+    <widget class="QLineEdit" name="nameEdit">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -159,7 +159,7 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_2">
+    <widget class="QLineEdit" name="adressEdit">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -206,7 +206,7 @@
       <string notr="true">createButtonGroup</string>
      </attribute>
     </widget>
-    <widget class="QRadioButton" name="radioButton_2">
+    <widget class="QRadioButton" name="computerButton">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -240,7 +240,7 @@
       <string>Create new device</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="randomAddress">
+    <widget class="QPushButton" name="randomAddressButton">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -251,6 +251,77 @@
      </property>
      <property name="text">
       <string>Random address</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>440</y>
+       <width>261</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Threads</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="onThreadButton">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>480</y>
+       <width>261</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>ON</string>
+     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">threadsGroup</string>
+     </attribute>
+    </widget>
+    <widget class="QRadioButton" name="offThreadButton">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>520</y>
+       <width>261</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>OFF</string>
+     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">threadsGroup</string>
+     </attribute>
+    </widget>
+    <widget class="QPushButton" name="stepButton">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>560</y>
+       <width>261</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>STEP</string>
      </property>
     </widget>
    </widget>
@@ -289,6 +360,12 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>91</width>
+      <height>31</height>
+     </size>
+    </property>
     <property name="text">
      <string>Enter</string>
     </property>
@@ -312,6 +389,7 @@
  <connections/>
  <buttongroups>
   <buttongroup name="createButtonGroup"/>
-  <buttongroup name="listButtonGroup"/>
+  <buttongroup name="devicesGroup"/>
+  <buttongroup name="threadsGroup"/>
  </buttongroups>
 </ui>
