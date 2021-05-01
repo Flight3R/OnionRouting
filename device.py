@@ -2,7 +2,7 @@ import threading
 from time import sleep
 from re import findall
 from random import randint
-from os import getcwd, path
+from os import getcwd, path, rename
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization, padding
@@ -136,7 +136,7 @@ def parse_command_line(line):
 
 
 class Device(threading.Thread):
-    def __init__(self, name="None", ip_address="None", tor_network=None):
+    def __init__(self, name, ip_address, tor_network):
         threading.Thread.__init__(self)
         self.name = name
         self.ip_address = validate_address(ip_address, tor_network)
@@ -163,15 +163,15 @@ class Device(threading.Thread):
     def log_write(self, file_type, log_message):
         if file_type == "console":
             print(log_message)
-        with open(path.join(getcwd(), "logs", file_type + "_logs.txt"), "a+") as file:
+        with open(path.join(getcwd(), "logs", file_type + ".txt"), "a+") as file:
             file.write(log_message)
             file.write("\n")
-        with open(path.join(getcwd(), "logs", file_type + "_" + self.name + "_logs.txt"), "a+") as file:
+        with open(path.join(getcwd(), "logs", file_type + "_" + self.name + ".txt"), "a+") as file:
             file.write(log_message)
             file.write("\n")
 
     def execute_command(self, line):
-        self.log_write("console", "{}$>>\t{}".format(str(self), line))
+        self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(parse_command_line(line))
         current = next(commands)
         if current == "show":
@@ -197,26 +197,47 @@ class Device(threading.Thread):
             current = next(commands)
         except StopIteration:
             return "Syntax: change name <new_name>\n"
+        if not self.tor_network.allow_name(current):
+            return "Name already in use! Choose different one!\n"
+        try:
+            rename(path.join(getcwd(), "logs", "console_" + self.name + ".txt"),
+                   path.join(getcwd(), "logs", "console_" + current + ".txt"))
+        except FileNotFoundError:
+            pass
+        try:
+            rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
+                   path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
+        except FileNotFoundError:
+            pass
+        rename(path.join(getcwd(), "keys", self.name + "_public_key.txt"),
+               path.join(getcwd(), "keys", current + "_public_key.txt"))
+        rename(path.join(getcwd(), "keys", self.name + "_private_key.txt"),
+               path.join(getcwd(), "keys", current + "_private_key.txt"))
         self.name = current
-        return "Name changed."
+        return "Name changed.\n"
 
     def change_address(self, commands):
         try:
             current = next(commands)
         except StopIteration:
-            return "Syntax: change ip <new_address>\n"
-        if check_address_octets(current) and self.tor_network.allow_address(current):
-            return "Address changed."
-        return "Not a valid address!"
+            return "Syntax: change address <new_address>\n"
+        if not check_address_octets(current) or not self.tor_network.allow_address(current):
+            return "Not a valid address!\n"
+        if len(self.connection_list) != 0:
+            return "Cannot change address with open connections!\n"
+        self.ip_address = current
+        return "Address changed.\n"
 
     def show_command(self, commands):
-        syntax = "Syntax: show {address|servers|connections|logs}\n"
+        syntax = "Syntax: show {name|address|servers|connections|logs}\n"
         try:
             current = next(commands)
         except StopIteration:
             return syntax
+        if current == "name":
+            return self.name + "\n"
         if current == "address":
-            return self.ip_address
+            return self.ip_address + "\n"
         if current == "servers":
             return self.get_servers()
         if current == "connections":
@@ -252,7 +273,7 @@ class Device(threading.Thread):
             return syntax
         try:
             if current == "console" or current == "sniff":
-                with open(path.join(getcwd(), "logs", current + "_" + self.name + "_logs.txt"), "r") as file:
+                with open(path.join(getcwd(), "logs", current + "_" + self.name + ".txt"), "r") as file:
                     result = file.read()
                 return result
             return "Unknown command! " + syntax

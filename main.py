@@ -5,6 +5,7 @@ import computer
 import server
 import tor_network
 
+
 try:
     mkdir("keys")
 except FileExistsError:
@@ -32,14 +33,13 @@ srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
 
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.start()
-
-print(pc1.execute_command("show logs sniff"))
+######################################################################################################################
 print(pc1.execute_command("onion init 04.03.02.01"))
 print(pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
 sleep(1)
 print(pc1.execute_command("onion finalize 0"))
 sleep(1)
-
+######################################################################################################################
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.run_event.clear()
     host.join()
@@ -58,6 +58,6 @@ for host in torNetwork.server_list + torNetwork.computer_list:
 #     init <ip_address>
 #     message <number> "<message>"
 #     finalize <number>
-
-# sleep(2)
-# rmtree("keys")
+# change
+#     name <new_name>
+#     address <new_address>
