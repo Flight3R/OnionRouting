@@ -28,12 +28,11 @@ except FileNotFoundError:
 
 mkdir("logs")
 
-
 torNetwork = tor_network.TorNetwork([], [])
-
 pc1 = computer.Computer("PC1", "1.112.11.69", torNetwork)
 pc2 = computer.Computer("PC2", "11.22.33.44", torNetwork)
 pc3 = computer.Computer("PC3", "04.03.02.01", torNetwork)
+
 
 srv1 = server.Server("SRV1", "11.11.11.11", torNetwork)
 srv2 = server.Server("SRV2", "22.22.22.22", torNetwork)
@@ -41,11 +40,10 @@ srv3 = server.Server("SRV3", "33.33.33.33", torNetwork)
 srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
 srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
 srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
-rmtree("keys")
-rmtree("logs")
 
 
 class Ui_MainWindow(object):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1602, 1003)
@@ -89,7 +87,7 @@ class Ui_MainWindow(object):
         self.removeDeviceButton.setObjectName("removeDeviceButton")
         self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.groupBox.setGeometry(QtCore.QRect(0, 150, 261, 811))
-        self.groupBox.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.groupBox.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.groupBox.setObjectName("groupBox")
         self.label_3 = QtWidgets.QLabel(self.groupBox)
         self.label_3.setGeometry(QtCore.QRect(0, 150, 261, 41))
@@ -121,6 +119,7 @@ class Ui_MainWindow(object):
         self.createServerButton = QtWidgets.QRadioButton(self.groupBox)
         self.createServerButton.setGeometry(QtCore.QRect(0, 70, 261, 41))
         self.createServerButton.setObjectName("createServerButton")
+        self.createServerButton.setChecked(True)
         self.createButtonGroup = QtWidgets.QButtonGroup(MainWindow)
         self.createButtonGroup.setObjectName("createButtonGroup")
         self.createButtonGroup.addButton(self.createServerButton)
@@ -183,8 +182,8 @@ class Ui_MainWindow(object):
         self.computerListButton.clicked.connect(lambda: self.clickedComputerListButton(torNetwork))
         self.serverListButton.clicked.connect(lambda: self.clickedServerListButton(torNetwork))
         self.randomAddressButton.clicked.connect(lambda: self.randomAddress(device.random_address()))
-        self.createButton.clicked.connect(lambda: self.createNewDevice(self.nameEdit.text(),
-                                                                       self.addressEdit.text(), torNetwork))
+        self.createButton.clicked.connect(lambda: self.createNewDevice(
+            self.nameEdit.text(), self.addressEdit.text(), torNetwork, self.createServerButton.isChecked()))
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -211,27 +210,27 @@ class Ui_MainWindow(object):
         self.terminal.setText(_translate("MainWindow", "terminal"))
         self.terminalEnterButton.setText(_translate("MainWindow", "Enter"))
 
-    def clickedComputerListButton(self, torNetwork=None):
+    def clickedComputerListButton(self, torNetwork):
         self.listComboBox.clear()
         for pc in torNetwork.computer_list:
-            self.listComboBox.addItem(pc.name)
+            self.listComboBox.addItem(str(pc))
 
-    def clickedServerListButton(self, torNetwork=None):
+    def clickedServerListButton(self, torNetwork):
         self.listComboBox.clear()
         for serv in torNetwork.server_list:
-            self.listComboBox.addItem(serv.name)
+            self.listComboBox.addItem(str(serv))
 
-    def createNewDevice(self, name=None, ip_address=None, torNetwork=None):
-        #properValues = name and ip_address and torNetwork
-        #if name and ip_address and torNetwork and self.createServerButton.isChecked():
-        x = server.Server(name, ip_address, tor_network)
-        #elif name and ip_address and torNetwork and self.createComputerButton.isChecked():
-           # x = computer.Computer(name, ip_address, tor_network)
+    def createNewDevice(self, name, ip_address, torNetwork, isServer):
+        if isServer:
+            server.Server(name, ip_address, torNetwork)
+        else:
+            computer.Computer(name, ip_address, torNetwork)
 
-    def randomAddress(self, address=None):
+    def randomAddress(self, address):
         self.addressEdit.setText(address)
 
-
+    def komendy(self):
+        pass
 
 if __name__ == "__main__":
     import sys
