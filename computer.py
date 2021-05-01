@@ -19,7 +19,7 @@ def rsa_encrypt(key, data):
 
 
 class Computer(device.Device):
-    def __init__(self, name=None, ip_address=None, tor_network=None):
+    def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
         tor_network.computer_list.append(self)
 
@@ -120,7 +120,7 @@ class Computer(device.Device):
                 self.handle_new_connection(packet)
 
     def execute_command(self, line):
-        self.log_write("console", "{}$>>\t{}".format(str(self), line))
+        self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(device.parse_command_line(line))
         current = next(commands)
         if current == "show":

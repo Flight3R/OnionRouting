@@ -18,7 +18,7 @@ def rsa_decrypt(key, encrypted):
 
 
 class Server(device.Device):
-    def __init__(self, name=None, ip_address=None, tor_network=None):
+    def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
         tor_network.server_list.append(self)
 
