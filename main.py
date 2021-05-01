@@ -5,7 +5,6 @@ import computer
 import server
 import tor_network
 
-
 try:
     mkdir("keys")
 except FileExistsError:
@@ -17,7 +16,6 @@ except FileNotFoundError:
     pass
 
 mkdir("logs")
-
 
 torNetwork = tor_network.TorNetwork([], [])
 
@@ -32,31 +30,34 @@ srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
 srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
 srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
 
-
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.start()
 
-print("––––––––––––––––––CONN INIT––––––––––––––––––––")
-pc1.connection_init("04.03.02.01")
-
+print(pc1.execute_command("show logs sniff"))
+print(pc1.execute_command("onion init 04.03.02.01"))
+print(pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
 sleep(1)
-
-print("––––––––––––––––––MSG SENT––––––––––––––––––––")
-MESSAGE = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo metus vitae elit volutpat consectetur. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent malesuada dolor id libero dapibus, eget volutpat erat vestibulum. Morbi vel nulla libero."
-pc1.onion_message(pc1.connection_list[0], MESSAGE)
-
-sleep(1)
-
-print("––––––––––––––––––CONN FIN––––––––––––––––––––")
-pc1.connection_finalize(pc1.connection_list[0])
-
+print(pc1.execute_command("onion finalize 0"))
 sleep(1)
 
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.run_event.clear()
     host.join()
 
-print("––––––––––––––––––TERM––––––––––––––––––––––––")
+# COMMANDS:
+# show
+#     address
+#     servers
+#     connections
+#     connections <number>
+#     logs
+#         sniff
+#         console
+#
+# onion
+#     init <ip_address>
+#     message <number> "<message>"
+#     finalize <number>
 
 # sleep(2)
 # rmtree("keys")

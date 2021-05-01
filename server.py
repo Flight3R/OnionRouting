@@ -1,5 +1,4 @@
 import random
-from time import sleep
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 import connection
@@ -24,7 +23,10 @@ class Server(device.Device):
         tor_network.server_list.append(self)
 
     def handle_forward_connection(self, current_connection, raw_data):
-        data = device.aes_decrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], raw_data)
+        try:
+            data = device.aes_decrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], raw_data)
+        except ValueError:
+            return
         if data == 128 * b"0":
             self.remove_connection(current_connection)
         elif current_connection.is_end_node:
@@ -34,7 +36,8 @@ class Server(device.Device):
             if number != b"000":
                 current_connection.data_buffer.append(message)
             else:
-                unpadded_message = device.remove_padding(b"".join([data for data in current_connection.data_buffer] + [message]))
+                unpadded_message = device.remove_padding(
+                    b"".join([data for data in current_connection.data_buffer] + [message]))
                 current_connection.data_buffer = []
                 self.forward_connection(current_connection, unpadded_message)
         else:
@@ -44,13 +47,17 @@ class Server(device.Device):
         if current_connection.is_end_node:
             blocks = device.split_to_packets(raw_data)
             for i, block in enumerate(blocks):
-                self.backward_connection(current_connection, device.prepare_number(len(blocks)-i-1) + self.splitter + block)
+                self.backward_connection(current_connection,
+                                         device.prepare_number(len(blocks) - i - 1) + self.splitter + block)
         else:
             self.backward_connection(current_connection, raw_data)
 
     def create_connection(self, packet):
         raw_data = packet[3]
-        data = rsa_decrypt(self.private_key, raw_data).split(self.splitter)  # decrypt packet[3] with self.privateKey before split
+        try:
+            data = rsa_decrypt(self.private_key, raw_data).split(self.splitter)
+        except ValueError:
+            return
         next_port = random.randint(4000, 65535)
         next_addr = data[0].decode()
         new_connection = connection.Connection(packet[0], packet[2], next_port, next_addr)
@@ -61,26 +68,40 @@ class Server(device.Device):
         except IndexError:
             pass
         self.connection_list.append(new_connection)
-        device.log_write("console", "{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, new_connection.source_addr, new_connection.dest_addr, len(self.splitter.join(data)), self.splitter.join(data)))
+        self.log_write("console", "{}:\trcv/new/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
+                                                                                                   new_connection.source_addr,
+                                                                                                   new_connection.dest_addr,
+                                                                                                   len(self.splitter.join(
+                                                                                                       data)),
+                                                                                                   self.splitter.join(
+                                                                                                       data)))
 
     def forward_connection(self, current_connection, data):
         self.send_data(current_connection.dest_addr, current_connection.dest_port, data)
-        device.log_write("console", "{}:\tsnd/fwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self, current_connection.source_addr, current_connection.dest_addr, len(data), data))
+        self.log_write("console", "{}:\tsnd/fwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
+                                                                                                   current_connection.source_addr,
+                                                                                                   current_connection.dest_addr,
+                                                                                                   len(data), data))
 
     def backward_connection(self, current_connection, data):
         data = device.aes_encrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], data)
         self.send_data(current_connection.source_addr, current_connection.source_port, data)
-        device.log_write("console", "{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}". format(self, current_connection.dest_addr, current_connection.source_addr, len(data), data))
+        self.log_write("console", "{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
+                                                                                                   current_connection.dest_addr,
+                                                                                                   current_connection.source_addr,
+                                                                                                   len(data), data))
 
     def remove_connection(self, current_connection):
-        device.log_write("console", "{}:\trcv/rmv/con from: {}\tto: {}".format(self, current_connection.source_addr, current_connection.dest_addr))
+        self.log_write("console", "{}:\trcv/rmv/con from: {}\tto: {}".format(self, current_connection.source_addr,
+                                                                             current_connection.dest_addr))
         self.connection_list.remove(current_connection)
 
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
-            device.log_write("sniff", "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdest_port: {}\tdata_length: {}\traw_data: {}"
-                             .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
+            self.log_write("sniff",
+                           "{}:\tnew packet: src_addr: {}\tdst_addr: {}\tdst_port: {}\tdata_length: {}\traw_data: {}"
+                           .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))
                 self.handle_forward_connection(current_connection, packet[3])
@@ -90,8 +111,3 @@ class Server(device.Device):
                     self.handle_backward_connection(current_connection, packet[3])
                 except StopIteration:
                     self.create_connection(packet)
-
-    def run(self):
-        while self.run_event.is_set():
-            self.buffer_check()
-            sleep(0.1)
