@@ -13,7 +13,7 @@ from os import mkdir
 from shutil import rmtree
 import computer
 import server
-import tor_network
+import torNetwork
 
 try:
     mkdir("keys")
@@ -27,7 +27,7 @@ except FileNotFoundError:
 
 mkdir("logs")
 
-torNetwork = tor_network.TorNetwork([], [])
+torNetwork = torNetwork.TorNetwork([], [])
 
 pc1 = computer.Computer("PC1", "1.112.11.69", torNetwork)
 pc2 = computer.Computer("PC2", "11.22.33.44", torNetwork)

@@ -11,10 +11,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from os import mkdir
 from shutil import rmtree
+from os import getcwd, path
 import device
 import computer
 import server
-import tor_network
+import torNetwork
 
 try:
     mkdir("keys")
@@ -28,23 +29,35 @@ except FileNotFoundError:
 
 mkdir("logs")
 
-torNetwork = tor_network.TorNetwork([], [])
-pc1 = computer.Computer("PC1", "1.112.11.69", torNetwork)
-pc2 = computer.Computer("PC2", "11.22.33.44", torNetwork)
-pc3 = computer.Computer("PC3", "04.03.02.01", torNetwork)
+tor_network = torNetwork.TorNetwork([], [])
+pc1 = computer.Computer("PC1", "1.112.11.69", tor_network)
+pc2 = computer.Computer("PC2", "11.22.33.44", tor_network)
+pc3 = computer.Computer("PC3", "04.03.02.01", tor_network)
+
+srv1 = server.Server("SRV1", "11.11.11.11", tor_network)
+srv2 = server.Server("SRV2", "22.22.22.22", tor_network)
+srv3 = server.Server("SRV3", "33.33.33.33", tor_network)
+srv4 = server.Server("SRV4", "44.44.44.44", tor_network)
+srv5 = server.Server("SRV5", "55.55.55.55", tor_network)
+srv6 = server.Server("SRV6", "66.66.66.66", tor_network)
+chosen_device = srv1
+
+for host in tor_network.server_list + tor_network.computer_list:
+    host.start()
+
+print(pc1.execute_command("show logs sniff"))
+print(pc1.execute_command("onion init 04.03.02.01"))
+print(pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
+print(pc1.execute_command("onion finalize 0"))
+
+for host in tor_network.server_list + tor_network.computer_list:
+    host.run_event.clear()
+    host.join()
 
 
-srv1 = server.Server("SRV1", "11.11.11.11", torNetwork)
-srv2 = server.Server("SRV2", "22.22.22.22", torNetwork)
-srv3 = server.Server("SRV3", "33.33.33.33", torNetwork)
-srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
-srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
-srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
+class UiMainWindow(object):
 
-
-class Ui_MainWindow(object):
-
-    def setupUi(self, MainWindow):
+    def setup_ui(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1602, 1003)
         MainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
@@ -57,16 +70,17 @@ class Ui_MainWindow(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.computerListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.computerListButton.setObjectName("computerListButton")
-        self.devicesGroup = QtWidgets.QButtonGroup(MainWindow)
-        self.devicesGroup.setObjectName("devicesGroup")
-        self.devicesGroup.addButton(self.computerListButton)
-        self.verticalLayout.addWidget(self.computerListButton)
         self.serverListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.serverListButton.setObjectName("serverListButton")
+        self.serverListButton.setChecked(True)
+        self.devicesGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.devicesGroup.setObjectName("devicesGroup")
         self.devicesGroup.addButton(self.serverListButton)
         self.verticalLayout.addWidget(self.serverListButton)
+        self.computerListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
+        self.computerListButton.setObjectName("computerListButton")
+        self.devicesGroup.addButton(self.computerListButton)
+        self.verticalLayout.addWidget(self.computerListButton)
         self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
         self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(120, 0, 141, 71))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
@@ -79,6 +93,7 @@ class Ui_MainWindow(object):
         self.listComboBox = QtWidgets.QComboBox(self.verticalLayoutWidget_2)
         self.listComboBox.setObjectName("listComboBox")
         self.verticalLayout_2.addWidget(self.listComboBox)
+        self.clicked_server_list_button(tor_network)
         self.removeDeviceButton = QtWidgets.QPushButton(self.centralwidget)
         self.removeDeviceButton.setGeometry(QtCore.QRect(0, 70, 261, 81))
         font = QtGui.QFont()
@@ -159,13 +174,14 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.stepButton.setFont(font)
         self.stepButton.setObjectName("stepButton")
-        self.terminalEntry = QtWidgets.QListView(self.centralwidget)
+        self.terminalEntry = QtWidgets.QListWidget(self.centralwidget)
         self.terminalEntry.setGeometry(QtCore.QRect(260, 30, 1341, 121))
         self.terminalEntry.setStyleSheet("")
         self.terminalEntry.setObjectName("terminalEntry")
         self.terminal = QtWidgets.QLineEdit(self.centralwidget)
         self.terminal.setGeometry(QtCore.QRect(260, 0, 1251, 31))
         self.terminal.setObjectName("terminal")
+        self.terminal.setPlaceholderText("terminal")
         self.terminalEnterButton = QtWidgets.QPushButton(self.centralwidget)
         self.terminalEnterButton.setGeometry(QtCore.QRect(1510, 0, 91, 31))
         self.terminalEnterButton.setMinimumSize(QtCore.QSize(91, 31))
@@ -179,21 +195,24 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.computerListButton.clicked.connect(lambda: self.clickedComputerListButton(torNetwork))
-        self.serverListButton.clicked.connect(lambda: self.clickedServerListButton(torNetwork))
-        self.randomAddressButton.clicked.connect(lambda: self.randomAddress(device.random_address()))
-        self.createButton.clicked.connect(lambda: self.createNewDevice(
-            self.nameEdit.text(), self.addressEdit.text(), torNetwork, self.createServerButton.isChecked()))
+        self.computerListButton.clicked.connect(lambda: self.clicked_computer_list_button(tor_network))
+        self.serverListButton.clicked.connect(lambda: self.clicked_server_list_button(tor_network))
+        self.randomAddressButton.clicked.connect(lambda: self.set_random_address(device.validate_address(
+            device.random_address(), tor_network)))
+        self.createButton.clicked.connect(lambda: self.create_new_device(
+            self.nameEdit.text(), self.addressEdit.text(), tor_network, self.createServerButton.isChecked()))
+        self.terminalEnterButton.clicked.connect(lambda: self.clicked_terminal_enter_button())
+        self.listComboBox.activated.connect(lambda: self.choose_device(tor_network, chosen_device))
 
-        self.retranslateUi(MainWindow)
+        self.retranslate_ui(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def retranslateUi(self, MainWindow):
+    def retranslate_ui(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.computerListButton.setText(_translate("MainWindow", "Computers\' list"))
         self.serverListButton.setText(_translate("MainWindow", "Servers\' list"))
-        self.label.setText(_translate("MainWindow", "Computer/Server List"))
+        self.label.setText(_translate("MainWindow", "Server/Computer List"))
         self.removeDeviceButton.setText(_translate("MainWindow", "Remove chosen device"))
         self.groupBox.setTitle(_translate("MainWindow", "Add new device"))
         self.label_3.setText(_translate("MainWindow", "Name:"))
@@ -207,36 +226,54 @@ class Ui_MainWindow(object):
         self.onThreadButton.setText(_translate("MainWindow", "ON"))
         self.offThreadButton.setText(_translate("MainWindow", "OFF"))
         self.stepButton.setText(_translate("MainWindow", "STEP"))
-        self.terminal.setText(_translate("MainWindow", "terminal"))
         self.terminalEnterButton.setText(_translate("MainWindow", "Enter"))
 
-    def clickedComputerListButton(self, torNetwork):
+    def clicked_computer_list_button(self, _tor_network):
         self.listComboBox.clear()
-        for pc in torNetwork.computer_list:
+        for pc in _tor_network.computer_list:
             self.listComboBox.addItem(str(pc))
 
-    def clickedServerListButton(self, torNetwork):
+    def clicked_server_list_button(self, _tor_network):
         self.listComboBox.clear()
-        for serv in torNetwork.server_list:
+        for serv in _tor_network.server_list:
             self.listComboBox.addItem(str(serv))
 
-    def createNewDevice(self, name, ip_address, torNetwork, isServer):
+    def create_new_device(self, name, ip_address, _tor_network, isServer):
         if isServer:
-            server.Server(name, ip_address, torNetwork)
+            self.listComboBox.addItem(str(server.Server(name, ip_address, _tor_network)))
         else:
-            computer.Computer(name, ip_address, torNetwork)
+            self.listComboBox.addItem(str(computer.Computer(name, ip_address, _tor_network)))
 
-    def randomAddress(self, address):
+    def set_random_address(self, address):
         self.addressEdit.setText(address)
 
-    def komendy(self):
+    def choose_device(self, _tor_network, _chosen_device):
+        for host in _tor_network.server_list + _tor_network.computer_list:
+            if str(host) == self.listComboBox.currentText():
+                _chosen_device = host
+                break
+        self.load_terminal_entry(_chosen_device)
+
+    def load_terminal_entry(self, _chosen_device):
+        try:
+            self.terminalEntry.clear()
+            with open(path.join(getcwd(), "logs", "console_" + _chosen_device.name + "_logs.txt"), "r") as file:
+                for line in file:
+                    self.terminalEntry.addItem(line)
+        except FileNotFoundError:
+            pass
+
+
+    def clicked_terminal_enter_button(self):
         pass
+
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    OnionRouting = QtWidgets.QMainWindow()
+    ui = UiMainWindow()
+    ui.setup_ui(OnionRouting)
+    OnionRouting.show()
     sys.exit(app.exec_())

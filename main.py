@@ -3,7 +3,7 @@ from shutil import rmtree
 from time import sleep
 import computer
 import server
-import tor_network
+import torNetwork
 
 try:
     mkdir("keys")
@@ -17,20 +17,20 @@ except FileNotFoundError:
 
 mkdir("logs")
 
-torNetwork = tor_network.TorNetwork([], [])
+tor_network = torNetwork.TorNetwork([], [])
 
-pc1 = computer.Computer("PC1", "1.112.11.69", torNetwork)
-pc2 = computer.Computer("PC2", "11.22.33.44", torNetwork)
-pc3 = computer.Computer("PC3", "04.03.02.01", torNetwork)
+pc1 = computer.Computer("PC1", "1.112.11.69", tor_network)
+pc2 = computer.Computer("PC2", "11.22.33.44", tor_network)
+pc3 = computer.Computer("PC3", "04.03.02.01", tor_network)
 
-srv1 = server.Server("SRV1", "11.11.11.11", torNetwork)
-srv2 = server.Server("SRV2", "22.22.22.22", torNetwork)
-srv3 = server.Server("SRV3", "33.33.33.33", torNetwork)
-srv4 = server.Server("SRV4", "44.44.44.44", torNetwork)
-srv5 = server.Server("SRV5", "55.55.55.55", torNetwork)
-srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
+srv1 = server.Server("SRV1", "11.11.11.11", tor_network)
+srv2 = server.Server("SRV2", "22.22.22.22", tor_network)
+srv3 = server.Server("SRV3", "33.33.33.33", tor_network)
+srv4 = server.Server("SRV4", "44.44.44.44", tor_network)
+srv5 = server.Server("SRV5", "55.55.55.55", tor_network)
+srv6 = server.Server("SRV6", "66.66.66.66", tor_network)
 
-for host in torNetwork.server_list + torNetwork.computer_list:
+for host in tor_network.server_list + tor_network.computer_list:
     host.start()
 
 print(pc1.execute_command("show logs sniff"))
@@ -40,7 +40,7 @@ sleep(1)
 print(pc1.execute_command("onion finalize 0"))
 sleep(1)
 
-for host in torNetwork.server_list + torNetwork.computer_list:
+for host in tor_network.server_list + tor_network.computer_list:
     host.run_event.clear()
     host.join()
 
