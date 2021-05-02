@@ -78,7 +78,7 @@ class Server(device.Device):
                                                                                                        data)))
 
     def forward_connection(self, current_connection, data):
-        self.tor_network.send_data(self.ip_address, current_connection.dest_addr, current_connection.dest_port, data)
+        self.form_and_send_packet(current_connection.dest_addr, current_connection.dest_port, data)
         self.log_write("console", "{}:\tsnd/fwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
                                                                                                    current_connection.source_addr,
                                                                                                    current_connection.dest_addr,
@@ -86,7 +86,7 @@ class Server(device.Device):
 
     def backward_connection(self, current_connection, data):
         data = device.aes_encrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], data)
-        self.tor_network.send_data(self.ip_address, current_connection.source_addr, current_connection.source_port, data)
+        self.form_and_send_packet(current_connection.source_addr, current_connection.source_port, data)
         self.log_write("console", "{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
                                                                                                    current_connection.dest_addr,
                                                                                                    current_connection.source_addr,

@@ -34,16 +34,11 @@ srv6 = server.Server("SRV6", "66.66.66.66", torNetwork)
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.start()
 ######################################################################################################################
-pc1.log_write("console", pc1.execute_command("onion init 44.03.02.01"))
-# pc1.log_write("console", pc1.execute_command("onion init 11.22.33.44"))
-# pc1.log_write("console", pc1.execute_command("show servers"))
+pc1.log_write("console", pc1.execute_command("onion init 04.03.02.01"))
 pc1.log_write("console", pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
-# pc1.log_write("console", pc1.execute_command("show connections"))
 sleep(1)
-# pc1.log_write("console", pc1.execute_command('onion message 0 "kolejna wiadomosc"'))
 pc1.log_write("console", pc1.execute_command("onion finalize 0"))
-# sleep(1)
-# pc1.log_write("console", pc1.execute_command("show connections"))
+sleep(1)
 ######################################################################################################################
 for host in torNetwork.server_list + torNetwork.computer_list:
     host.run_event.clear()

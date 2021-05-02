@@ -153,6 +153,9 @@ class Device(threading.Thread):
         self.run_event = threading.Event()
         self.run_event.set()
 
+    def __str__(self):
+        return self.name + "[" + self.ip_address + "]"
+
     def log_write(self, file_type, log_message):
         if file_type == "console":
             print(log_message)
@@ -163,6 +166,28 @@ class Device(threading.Thread):
             file.write(log_message)
             file.write("\n")
 
+    def buffer_check(self):
+        pass
+
+    def connections_timeout_check(self):
+        for conn in self.connection_list:
+            if time() - conn.timeout > 10:
+                self.connection_list.remove(conn)
+
+    def run(self):
+        while self.run_event.is_set():
+            self.connections_timeout_check()
+            self.buffer_check()
+            sleep(0.1)
+
+    def form_and_send_packet(self, dest_addr, port, data):
+        packet = [self.ip_address, dest_addr, port, data]
+        try:
+            self.tor_network.serve_packet_transfer(packet)
+        except ConnectionError as exception:
+            self.log_write("console", "{}: {}".format(self, exception))
+
+# COMMAND EXECUTION BLOCK
     def execute_command(self, line):
         self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(parse_command_line(line))
@@ -268,20 +293,3 @@ class Device(threading.Thread):
             return "Unknown command! " + syntax
         except FileNotFoundError:
             return "There are no logs.\n"
-
-    def __str__(self):
-        return self.name + "[" + self.ip_address + "]"
-
-    def buffer_check(self):
-        pass
-
-    def connections_timeout_check(self):
-        for conn in self.connection_list:
-            if time() - conn.timeout > 5:
-                self.connection_list.remove(conn)
-
-    def run(self):
-        while self.run_event.is_set():
-            self.connections_timeout_check()
-            self.buffer_check()
-            sleep(0.1)
