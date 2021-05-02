@@ -1,4 +1,5 @@
 import random
+from time import time
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 import connection
@@ -77,7 +78,7 @@ class Server(device.Device):
                                                                                                        data)))
 
     def forward_connection(self, current_connection, data):
-        self.send_data(current_connection.dest_addr, current_connection.dest_port, data)
+        self.tor_network.send_data(self.ip_address, current_connection.dest_addr, current_connection.dest_port, data)
         self.log_write("console", "{}:\tsnd/fwd/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
                                                                                                    current_connection.source_addr,
                                                                                                    current_connection.dest_addr,
@@ -85,7 +86,7 @@ class Server(device.Device):
 
     def backward_connection(self, current_connection, data):
         data = device.aes_encrypt(current_connection.symmetric_keys[0], current_connection.init_vectors[0], data)
-        self.send_data(current_connection.source_addr, current_connection.source_port, data)
+        self.tor_network.send_data(self.ip_address, current_connection.source_addr, current_connection.source_port, data)
         self.log_write("console", "{}:\tsnd/bck/con from: {}\tto: {}\tlength: {}\tdata: {}".format(self,
                                                                                                    current_connection.dest_addr,
                                                                                                    current_connection.source_addr,
@@ -104,10 +105,12 @@ class Server(device.Device):
                            .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))
+                current_connection.timeout = time()
                 self.handle_forward_connection(current_connection, packet[3])
             except StopIteration:
                 try:
                     current_connection = next(filter(lambda c: c.dest_port == packet[2], self.connection_list))
+                    current_connection.timeout = time()
                     self.handle_backward_connection(current_connection, packet[3])
                 except StopIteration:
                     self.create_connection(packet)

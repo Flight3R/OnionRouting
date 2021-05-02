@@ -1,7 +1,7 @@
 import threading
-from time import sleep
 from re import findall
 from random import randint
+from time import sleep, time
 from os import getcwd, path, rename
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -129,9 +129,9 @@ def load_public_key(name):
 def parse_command_line(line):
     try:
         typo = findall("\".*\"", line)[0]
-        arg_list = line.removesuffix(typo).strip(" ").split(" ") + [typo[1:-1]]
+        arg_list = line.removesuffix(typo).strip().split() + [typo[1:-1]]
     except IndexError:
-        return line.strip(" ").split(" ")
+        return line.strip().split()
     return arg_list
 
 
@@ -153,13 +153,6 @@ class Device(threading.Thread):
         self.run_event = threading.Event()
         self.run_event.set()
 
-    def send_data(self, dest_addr, port, data):
-        packet = [self.ip_address, dest_addr, port, data]
-        for host in self.tor_network.server_list + self.tor_network.computer_list:
-            if dest_addr == host.ip_address:
-                host.buffer.append(packet)
-                break
-
     def log_write(self, file_type, log_message):
         if file_type == "console":
             print(log_message)
@@ -178,6 +171,8 @@ class Device(threading.Thread):
             return self.show_command(commands)
         if current == "change":
             return self.change_command(commands)
+        if current == "":
+            return "\n"
         return "Unknown command! Available: show, change\n"
 
     def change_command(self, commands):
@@ -199,16 +194,10 @@ class Device(threading.Thread):
             return "Syntax: change name <new_name>\n"
         if not self.tor_network.allow_name(current):
             return "Name already in use! Choose different one!\n"
-        try:
-            rename(path.join(getcwd(), "logs", "console_" + self.name + ".txt"),
-                   path.join(getcwd(), "logs", "console_" + current + ".txt"))
-        except FileNotFoundError:
-            pass
-        try:
-            rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
-                   path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
-        except FileNotFoundError:
-            pass
+        rename(path.join(getcwd(), "logs", "console_" + self.name + ".txt"),
+               path.join(getcwd(), "logs", "console_" + current + ".txt"))
+        rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
+               path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
         rename(path.join(getcwd(), "keys", self.name + "_public_key.txt"),
                path.join(getcwd(), "keys", current + "_public_key.txt"))
         rename(path.join(getcwd(), "keys", self.name + "_private_key.txt"),
@@ -286,7 +275,13 @@ class Device(threading.Thread):
     def buffer_check(self):
         pass
 
+    def connections_timeout_check(self):
+        for conn in self.connection_list:
+            if time() - conn.timeout > 5:
+                self.connection_list.remove(conn)
+
     def run(self):
         while self.run_event.is_set():
+            self.connections_timeout_check()
             self.buffer_check()
             sleep(0.1)
