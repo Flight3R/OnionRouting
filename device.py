@@ -262,7 +262,7 @@ class Device(threading.Thread):
         except StopIteration:
             result = ""
             for i, conn in enumerate(self.connection_list):
-                result += "{}\t{}\n".format(i, conn.get_brief())
+                result += "{}\t{}".format(i, conn.get_brief())
             return result
 
     def get_logs(self, commands):
