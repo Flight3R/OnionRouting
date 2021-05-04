@@ -131,8 +131,7 @@ def load_public_key(name):
 def parse_command_line(line):
     try:
         typo = findall("\".*\"", line)[0]
-        arg_list = line.strip\
-                       (typo).strip(" ").split(" ") + [typo[1:-1]]
+        arg_list = line.removesuffix(typo).strip(" ").split(" ") + [typo[1:-1]]
     except IndexError:
         return line.removesuffix(" ").split(" ")
     return arg_list

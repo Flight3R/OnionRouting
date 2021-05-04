@@ -40,7 +40,6 @@ srv3 = server.Server("SRV3", "33.33.33.33", tor_network)
 srv4 = server.Server("SRV4", "44.44.44.44", tor_network)
 srv5 = server.Server("SRV5", "55.55.55.55", tor_network)
 srv6 = server.Server("SRV6", "66.66.66.66", tor_network)
-chosen_device = srv1
 
 for host in tor_network.server_list + tor_network.computer_list:
     host.start()
@@ -57,7 +56,11 @@ for host in tor_network.server_list + tor_network.computer_list:
 
 class UiMainWindow(object):
 
+    def __init__(self):
+        self.chosen_device = None
+
     def setup_ui(self, MainWindow):
+
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1602, 1003)
         MainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
@@ -202,7 +205,9 @@ class UiMainWindow(object):
         self.createButton.clicked.connect(lambda: self.create_new_device(
             self.nameEdit.text(), self.addressEdit.text(), tor_network, self.createServerButton.isChecked()))
         self.terminalEnterButton.clicked.connect(lambda: self.clicked_terminal_enter_button())
-        self.listComboBox.activated.connect(lambda: self.choose_device(tor_network, chosen_device))
+        self.listComboBox.activated.connect(lambda: self.choose_device(tor_network))
+        self.terminalEnterButton.clicked.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
+        self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
 
         self.retranslate_ui(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -247,12 +252,12 @@ class UiMainWindow(object):
     def set_random_address(self, address):
         self.addressEdit.setText(address)
 
-    def choose_device(self, _tor_network, _chosen_device):
+    def choose_device(self, _tor_network):
         for host in _tor_network.server_list + _tor_network.computer_list:
             if str(host) == self.listComboBox.currentText():
-                _chosen_device = host
+                self.chosen_device = host
                 break
-        self.load_terminal_entry(_chosen_device)
+        self.load_terminal_entry(self.chosen_device)
 
     def load_terminal_entry(self, _chosen_device):
         try:
@@ -263,9 +268,10 @@ class UiMainWindow(object):
         except FileNotFoundError:
             pass
 
-
-    def clicked_terminal_enter_button(self):
-        pass
+    def clicked_terminal_enter_button(self, command_text):
+        self.chosen_device.execute_command(command_text)
+        self.terminal.clear()
+        self.load_terminal_entry(self.chosen_device)
 
 
 if __name__ == "__main__":
