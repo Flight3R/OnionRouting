@@ -1,5 +1,6 @@
 import os
 import random
+from time import time
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
 import connection
@@ -19,7 +20,7 @@ def rsa_encrypt(key, data):
 
 
 class Computer(device.Device):
-    def __init__(self, name=None, ip_address=None, tor_network=None):
+    def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
         tor_network.computer_list.append(self)
 
@@ -31,33 +32,33 @@ class Computer(device.Device):
         print()
         new_connection = connection.Connection(servers[0].ip_address, port, None, dest_addr)
 
-        """ generate symmetric keys and initialization vectors """
+        # generate symmetric keys and initialization vectors
         for _ in range(3):
             new_connection.symmetric_keys.append(os.urandom(16))
             new_connection.init_vectors.append(os.urandom(16))
 
         self.connection_list.append(new_connection)
 
-        """ initialize connection with first server """
+        # initialize connection with first server
         data = self.splitter.join(
             [servers[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
         data = rsa_encrypt(servers[0].public_key, data)
-        self.send_data(servers[0].ip_address, port, data)
+        self.form_and_send_packet(servers[0].ip_address, port, data)
 
-        """ initialize connection with second server """
+        # initialize connection with second server
         data = self.splitter.join(
             [servers[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
         data = rsa_encrypt(servers[1].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
-        self.send_data(servers[0].ip_address, port, data)
+        self.form_and_send_packet(servers[0].ip_address, port, data)
 
-        """ initialize connection with third server """
+        # initialize connection with third server
         data = self.splitter.join(
             [dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
         data = rsa_encrypt(servers[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
-        self.send_data(servers[0].ip_address, port, data)
+        self.form_and_send_packet(servers[0].ip_address, port, data)
 
     def onion_message(self, current_connection, message):
         blocks = device.split_to_packets(message.encode())
@@ -68,7 +69,7 @@ class Computer(device.Device):
     def connection_continue(self, current_connection, data):
         for i in range(3)[::-1]:
             data = device.aes_encrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i], data)
-        self.send_data(current_connection.source_addr, current_connection.source_port, data)
+        self.form_and_send_packet(current_connection.source_addr, current_connection.source_port, data)
 
     def connection_finalize(self, current_connection):
         for i in range(1, 4)[::-1]:
@@ -76,7 +77,7 @@ class Computer(device.Device):
             for j in range(i)[::-1]:
                 data = device.aes_encrypt(current_connection.symmetric_keys[j], current_connection.init_vectors[j],
                                           data)
-            self.send_data(current_connection.source_addr, current_connection.source_port, data)
+            self.form_and_send_packet(current_connection.source_addr, current_connection.source_port, data)
         self.connection_list.remove(current_connection)
 
     def handle_self_connection(self, current_connection, raw_data):
@@ -104,7 +105,7 @@ class Computer(device.Device):
                        .format(self, packet[0], len(message), message))
         # write from keyboard
         response = b" */*/* odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze"
-        self.send_data(packet[0], packet[2], response)
+        self.form_and_send_packet(packet[0], packet[2], response)
 
     def buffer_check(self):
         while len(self.buffer) != 0:
@@ -114,13 +115,15 @@ class Computer(device.Device):
                            .format(self, packet[0], packet[1], packet[2], len(packet[3]), packet[3]))
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))
+                current_connection.timeout = time()
                 self.handle_self_connection(current_connection, packet[3])
 
             except StopIteration:
                 self.handle_new_connection(packet)
 
+# COMMAND EXECUTION BLOCK
     def execute_command(self, line):
-        self.log_write("console", "{}$>>\t{}".format(str(self), line))
+        self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(device.parse_command_line(line))
         current = next(commands)
         if current == "show":
@@ -131,6 +134,8 @@ class Computer(device.Device):
             return self.message_command(commands)
         if current == "change":
             return self.change_command(commands)
+        if current == "":
+            return "\n"
         return "Unknown command! Available: show, onion, message, change\n"
 
     def onion_command(self, commands):

@@ -206,6 +206,7 @@ class UiMainWindow(object):
             self.nameEdit.text(), self.addressEdit.text(), tor_network, self.createServerButton.isChecked()))
         self.terminalEnterButton.clicked.connect(lambda: self.clicked_terminal_enter_button())
         self.listComboBox.activated.connect(lambda: self.choose_device(tor_network))
+
         self.terminalEnterButton.clicked.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
         self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
 
@@ -262,14 +263,14 @@ class UiMainWindow(object):
     def load_terminal_entry(self, _chosen_device):
         try:
             self.terminalEntry.clear()
-            with open(path.join(getcwd(), "logs", "console_" + _chosen_device.name + "_logs.txt"), "r") as file:
+            with open(path.join(getcwd(), "logs", "console_" + _chosen_device.name + ".txt"), "r") as file:
                 for line in file:
                     self.terminalEntry.addItem(line)
         except FileNotFoundError:
             pass
 
     def clicked_terminal_enter_button(self, command_text):
-        self.chosen_device.execute_command(command_text)
+        self.chosen_device.log_write("console", self.chosen_device.execute_command(command_text))
         self.terminal.clear()
         self.load_terminal_entry(self.chosen_device)
 

@@ -1,3 +1,6 @@
+from time import time
+
+
 class Connection:
     def __init__(self, source_addr, source_port, dest_port, dest_addr):
         self.source_addr = source_addr
@@ -8,6 +11,7 @@ class Connection:
         self.init_vectors = []
         self.data_buffer = []
         self.is_end_node = False
+        self.timeout = time()
 
     def get_brief(self):
         return "src_addr: {}\tdst_addr: {}\n".format(str(self.source_addr), self.dest_addr)
