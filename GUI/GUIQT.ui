@@ -383,13 +383,11 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources>
-  <include location="image.qrc"/>
- </resources>
+ <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="createButtonGroup"/>
   <buttongroup name="devicesGroup"/>
+  <buttongroup name="createButtonGroup"/>
   <buttongroup name="threadsGroup"/>
  </buttongroups>
 </ui>

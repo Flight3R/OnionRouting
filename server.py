@@ -1,5 +1,6 @@
 import random
 from time import time
+from PIL import Image
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 import connection
@@ -22,6 +23,10 @@ class Server(device.Device):
     def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
         tor_network.server_list.append(self)
+        try:
+            self.image = Image.open("srv.png")
+        except FileNotFoundError:
+            pass
 
     def handle_forward_connection(self, current_connection, raw_data):
         try:

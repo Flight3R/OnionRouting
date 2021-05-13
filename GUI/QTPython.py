@@ -64,7 +64,7 @@ class Ui_MainWindow(object):
         self.label_2.setGeometry(QtCore.QRect(400, 560, 70, 70))
         self.label_2.setObjectName("label_2")
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(1000, 520, 70, 70))
+        self.label_3.setGeometry(QtCore.QRect(200, 520, 70, 70))
         self.label_3.setObjectName("label_3")
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
         self.label_4.setGeometry(QtCore.QRect(1000, 790, 70, 70))
@@ -82,6 +82,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
+        self.createLabel()
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -91,11 +92,12 @@ class Ui_MainWindow(object):
         self.serverListButton.setText(_translate("MainWindow", "Servers\' list"))
         self.label.setText(_translate("MainWindow", "Computer/Server List"))
         self.terminal.setText(_translate("MainWindow", "terminal"))
-        self.label_2.setPixmap(QtGui.QPixmap("komp.png"))
-        self.label_3.setPixmap(QtGui.QPixmap("komp.png"))
-        self.label_4.setPixmap(QtGui.QPixmap("serwer.png"))
-        self.label_5.setPixmap(QtGui.QPixmap("serwer.png"))
 
+    def createLabel(self):
+        self.label_2.setPixmap(QtGui.QPixmap("pc.png"))
+        self.label_3.setPixmap(QtGui.QPixmap("pc.png"))
+        self.label_4.setPixmap(QtGui.QPixmap("srv.png"))
+        self.label_5.setPixmap(QtGui.QPixmap("srv.png"))
 
 if __name__ == "__main__":
     import sys

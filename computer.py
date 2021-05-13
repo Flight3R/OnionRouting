@@ -1,6 +1,7 @@
 import os
 import random
 from time import time
+from PIL import Image
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
 import connection
@@ -23,6 +24,10 @@ class Computer(device.Device):
     def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
         tor_network.computer_list.append(self)
+        try:
+            self.image = Image.open("pc.png")
+        except FileNotFoundError:
+            pass
 
     def connection_init(self, dest_addr):
         port = random.randint(4000, 65535)
