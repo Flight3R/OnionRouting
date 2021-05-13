@@ -20,44 +20,7 @@ import server
 import torNetwork
 import termWindow
 
-try:
-    mkdir("keys")
-except FileExistsError:
-    pass
-
-try:
-    rmtree("logs")
-except FileNotFoundError:
-
-    pass
-
-mkdir("logs")
-
 tor_network = torNetwork.TorNetwork([], [])
-pc1 = computer.Computer("PC1", "1.112.11.69", tor_network)
-pc2 = computer.Computer("PC2", "11.22.33.44", tor_network)
-pc3 = computer.Computer("PC3", "04.03.02.01", tor_network)
-
-srv1 = server.Server("SRV1", "11.11.11.11", tor_network)
-srv2 = server.Server("SRV2", "22.22.22.22", tor_network)
-srv3 = server.Server("SRV3", "33.33.33.33", tor_network)
-srv4 = server.Server("SRV4", "44.44.44.44", tor_network)
-srv5 = server.Server("SRV5", "55.55.55.55", tor_network)
-srv6 = server.Server("SRV6", "66.66.66.66", tor_network)
-
-for host in tor_network.server_list + tor_network.computer_list:
-    host.start()
-
-
-print(pc1.execute_command("show logs sniff"))
-print(pc1.execute_command("onion init 04.03.02.01"))
-print(pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
-print(pc1.execute_command("onion finalize 0"))
-
-for host in tor_network.server_list + tor_network.computer_list:
-    host.run_event.clear()
-    host.join()
-
 
 class UiMainWindow(object):
 
@@ -68,12 +31,12 @@ class UiMainWindow(object):
         self.label_dict = {}
         self.lista = []
 
-    def setup_ui(self, MainWindow):
+    def setup_ui(self, main_window):
 
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1602, 1003)
-        MainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        main_window.setObjectName("MainWindow")
+        main_window.resize(1602, 1003)
+        main_window.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.centralwidget = QtWidgets.QWidget(main_window)
         self.centralwidget.setEnabled(True)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
@@ -85,7 +48,7 @@ class UiMainWindow(object):
         self.serverListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.serverListButton.setObjectName("serverListButton")
         self.serverListButton.setChecked(True)
-        self.devicesGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.devicesGroup = QtWidgets.QButtonGroup(main_window)
         self.devicesGroup.setObjectName("devicesGroup")
         self.devicesGroup.addButton(self.serverListButton)
         self.verticalLayout.addWidget(self.serverListButton)
@@ -146,7 +109,7 @@ class UiMainWindow(object):
         self.createServerButton.setGeometry(QtCore.QRect(0, 70, 261, 41))
         self.createServerButton.setObjectName("createServerButton")
         self.createServerButton.setChecked(True)
-        self.createButtonGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.createButtonGroup = QtWidgets.QButtonGroup(main_window)
         self.createButtonGroup.setObjectName("createButtonGroup")
         self.createButtonGroup.addButton(self.createServerButton)
         self.createComputerButton = QtWidgets.QRadioButton(self.groupBox)
@@ -172,7 +135,7 @@ class UiMainWindow(object):
         self.onThreadButton = QtWidgets.QRadioButton(self.groupBox)
         self.onThreadButton.setGeometry(QtCore.QRect(0, 450, 261, 41))
         self.onThreadButton.setObjectName("onThreadButton")
-        self.threadsGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.threadsGroup = QtWidgets.QButtonGroup(main_window)
         self.threadsGroup.setObjectName("threadsGroup")
         self.threadsGroup.addButton(self.onThreadButton)
         self.offThreadButton = QtWidgets.QRadioButton(self.groupBox)
@@ -198,14 +161,14 @@ class UiMainWindow(object):
         self.terminalWindowButton.setGeometry(QtCore.QRect(1510, 0, 91, 31))
         self.terminalWindowButton.setMinimumSize(QtCore.QSize(91, 31))
         self.terminalWindowButton.setObjectName("terminalWindowButton")
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        main_window.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(main_window)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1602, 26))
         self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        main_window.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(main_window)
         self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        main_window.setStatusBar(self.statusbar)
 
         self.computerListButton.clicked.connect(lambda: self.clicked_computer_list_button(tor_network))
         self.serverListButton.clicked.connect(lambda: self.clicked_server_list_button(tor_network))
@@ -217,12 +180,12 @@ class UiMainWindow(object):
         self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
         self.terminalWindowButton.clicked.connect(lambda: self.setup_terminal(self.chosen_device))
 
-        self.retranslate_ui(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslate_ui(main_window)
+        QtCore.QMetaObject.connectSlotsByName(main_window)
 
-    def retranslate_ui(self, MainWindow):
+    def retranslate_ui(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.computerListButton.setText(_translate("MainWindow", "Computers\' list"))
         self.serverListButton.setText(_translate("MainWindow", "Servers\' list"))
         self.label.setText(_translate("MainWindow", "Server/Computer List"))
@@ -255,8 +218,8 @@ class UiMainWindow(object):
         self.chosen_device = self.listComboBox.currentIndex()
         self.choose_device(_tor_network)
 
-    def create_new_device(self, name, ip_address, _tor_network, isServer):
-        if isServer:
+    def create_new_device(self, name, ip_address, _tor_network, is_server):
+        if is_server:
             new_srv = server.Server(name, ip_address, _tor_network)
             self.listComboBox.addItem(str(new_srv))
             self.gwono = QtWidgets.QLabel(self.centralwidget)
@@ -265,7 +228,6 @@ class UiMainWindow(object):
             self.retranslate_ui(OnionRouting)
             OnionRouting.show()
             self.lista.append(self.gwono)
-            print("XD")
         else:
             new_computer = computer.Computer(name, ip_address, _tor_network)
             self.listComboBox.addItem(str(new_computer))
@@ -320,13 +282,49 @@ class UiMainWindow(object):
             self.load_terminal_entry(_chosen_device, True)
             self.ui.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.ui.terminal.text(), True))
 
+    def generate_default(self):
+        self.create_new_device("PC1", "1.112.11.69", tor_network, False)
+        self.create_new_device("PC2", "11.22.33.44", tor_network, False)
+        self.create_new_device("PC3", "04.03.02.01", tor_network, False)
+
+        self.create_new_device("SRV1", "11.11.11.11", tor_network, True)
+        self.create_new_device("SRV2", "22.22.22.22", tor_network, True)
+        self.create_new_device("SRV3", "33.33.33.33", tor_network, True)
+        self.create_new_device("SRV4", "44.44.44.44", tor_network, True)
+        self.create_new_device("SRV5", "55.55.55.55", tor_network, True)
+        self.create_new_device("SRV6", "66.66.66.66", tor_network, True)
+        self.create_new_device("SRV7", "77.77.77.77", tor_network, True)
+
+        for host in tor_network.server_list + tor_network.computer_list:
+            host.start()
+
 
 if __name__ == "__main__":
     import sys
+
+    try:
+        mkdir("keys")
+    except FileExistsError:
+        pass
+
+    try:
+        rmtree("logs")
+    except FileNotFoundError:
+
+        pass
+
+    mkdir("logs")
 
     app = QtWidgets.QApplication(sys.argv)
     OnionRouting = QtWidgets.QMainWindow()
     ui = UiMainWindow()
     ui.setup_ui(OnionRouting)
     OnionRouting.show()
+
+    ui.generate_default()
+
+    for host in tor_network.server_list + tor_network.computer_list:
+        host.run_event.clear()
+        host.join()
+
     sys.exit(app.exec_())
