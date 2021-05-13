@@ -20,16 +20,15 @@ import server
 import torNetwork
 import termWindow
 
-tor_network = torNetwork.TorNetwork([], [])
 
 class UiMainWindow(object):
 
-    def __init__(self):
+    def __init__(self, tor_network):
         self.ui = termWindow.UiMainWindowTerm()
         self.window = QtWidgets.QMainWindow()
         self.chosen_device = None
         self.label_dict = {}
-        self.lista = []
+        self.tor_network = tor_network
 
     def setup_ui(self, main_window):
 
@@ -47,7 +46,6 @@ class UiMainWindow(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.serverListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.serverListButton.setObjectName("serverListButton")
-        self.serverListButton.setChecked(True)
         self.devicesGroup = QtWidgets.QButtonGroup(main_window)
         self.devicesGroup.setObjectName("devicesGroup")
         self.devicesGroup.addButton(self.serverListButton)
@@ -170,15 +168,16 @@ class UiMainWindow(object):
         self.statusbar.setObjectName("statusbar")
         main_window.setStatusBar(self.statusbar)
 
-        self.computerListButton.clicked.connect(lambda: self.clicked_computer_list_button(tor_network))
-        self.serverListButton.clicked.connect(lambda: self.clicked_server_list_button(tor_network))
+        self.computerListButton.clicked.connect(lambda: self.clicked_computer_list_button())
+        self.serverListButton.clicked.connect(lambda: self.clicked_server_list_button())
         self.randomAddressButton.clicked.connect(lambda: self.set_random_address(device.validate_address(
-            device.random_address(), tor_network)))
+            device.random_address(), self.tor_network)))
         self.createButton.clicked.connect(lambda: self.create_new_device(
-            self.nameEdit.text(), self.addressEdit.text(), tor_network, self.createServerButton.isChecked()))
-        self.listComboBox.activated.connect(lambda: self.choose_device(tor_network))
+            self.nameEdit.text(), self.addressEdit.text(), self.createServerButton.isChecked()))
+        self.listComboBox.activated.connect(lambda: self.choose_device())
         self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
         self.terminalWindowButton.clicked.connect(lambda: self.setup_terminal(self.chosen_device))
+        # self.onThreadButton(lambda: se)
 
         self.retranslate_ui(main_window)
         QtCore.QMetaObject.connectSlotsByName(main_window)
@@ -204,40 +203,42 @@ class UiMainWindow(object):
         self.stepButton.setText(_translate("MainWindow", "STEP"))
         self.terminalWindowButton.setText(_translate("MainWindow", "Window"))
 
-    def clicked_computer_list_button(self, _tor_network):
+    def clicked_computer_list_button(self):
         self.listComboBox.clear()
-        for pc in _tor_network.computer_list:
+        for pc in self.tor_network.computer_list:
             self.listComboBox.addItem(str(pc))
         self.chosen_device = self.listComboBox.currentIndex()
-        self.choose_device(_tor_network)
+        self.choose_device()
 
-    def clicked_server_list_button(self, _tor_network):
+    def clicked_server_list_button(self):
         self.listComboBox.clear()
-        for serv in _tor_network.server_list:
+        for serv in self.tor_network.server_list:
             self.listComboBox.addItem(str(serv))
         self.chosen_device = self.listComboBox.currentIndex()
-        self.choose_device(_tor_network)
+        self.choose_device()
 
-    def create_new_device(self, name, ip_address, _tor_network, is_server):
+    def create_new_device(self, name, ip_address, is_server):
         if is_server:
-            new_srv = server.Server(name, ip_address, _tor_network)
+            new_srv = server.Server(name, ip_address, self.tor_network)
             self.listComboBox.addItem(str(new_srv))
-            self.gwono = QtWidgets.QLabel(self.centralwidget)
-            self.gwono.setGeometry(QtCore.QRect(390, 400, 70, 70))
-            self.gwono.setPixmap(QtGui.QPixmap("srv.png"))
-            self.retranslate_ui(OnionRouting)
-            OnionRouting.show()
-            self.lista.append(self.gwono)
+
+            self.label_dict[new_srv] = QtWidgets.QLabel(self.centralwidget)
+            self.label_dict[new_srv].setGeometry(QtCore.QRect(390, 400, 70, 70))
+            self.label_dict[new_srv].setPixmap(QtGui.QPixmap("srv.png"))
+            self.label_dict[new_srv].show()
         else:
-            new_computer = computer.Computer(name, ip_address, _tor_network)
+            new_computer = computer.Computer(name, ip_address, self.tor_network)
             self.listComboBox.addItem(str(new_computer))
-            self.create_label(new_computer)
+            self.label_dict[new_computer] = QtWidgets.QLabel(self.centralwidget)
+            self.label_dict[new_computer].setGeometry(QtCore.QRect(390, 400, 82, 84))
+            self.label_dict[new_computer].setPixmap(QtGui.QPixmap("pc.png"))
+            self.label_dict[new_computer].show()
 
     def set_random_address(self, address):
         self.addressEdit.setText(address)
 
-    def choose_device(self, _tor_network):
-        for host in _tor_network.server_list + _tor_network.computer_list:
+    def choose_device(self):
+        for host in self.tor_network.server_list + self.tor_network.computer_list:
             if str(host) == self.listComboBox.currentText():
                 self.chosen_device = host
                 break
@@ -249,10 +250,11 @@ class UiMainWindow(object):
             if general:
                 self.ui.terminalEntry.clear()
             with open(path.join(getcwd(), "logs", "console_" + _chosen_device.name + ".txt"), "r") as file:
-                for line in file:
-                    self.terminalEntry.addItem(line)
-                    if general:
-                        self.ui.terminalEntry.addItem(line)
+                data = file.readlines()
+            for line in data[::-1]:
+                self.terminalEntry.addItem(line)
+                if general:
+                    self.ui.terminalEntry.addItem(line)
         except FileNotFoundError:
             pass
 
@@ -264,37 +266,40 @@ class UiMainWindow(object):
             self.ui.terminal.clear()
             self.load_terminal_entry(self.chosen_device, True)
 
-    def create_label(self, _new_device):
-        self.label_dict[_new_device] = QtWidgets.QLabel(self.centralwidget)
-        if isinstance(_new_device, computer.Computer):
-            self.label_dict[_new_device].setGeometry(QtCore.QRect(500, 500, 82, 74))
-            self.label_dict[_new_device].setPixmap(QtGui.QPixmap("komp.png"))
-        else:
-            self.label_dict[_new_device].setGeometry(QtCore.QRect(300, 300, 70, 70))
-            self.label_dict[_new_device].setObjectName("provny labe")
-            self.label_dict[_new_device].setPixmap(QtGui.QPixmap("srv.png"))
-            print(self.label_dict[_new_device])
+    # def create_label(self, _new_device):
+    #     self.label_dict[_new_device] = QtWidgets.QLabel(self.centralwidget)
+    #     if isinstance(_new_device, computer.Computer):
+    #         self.label_dict[_new_device].setGeometry(QtCore.QRect(500, 500, 82, 74))
+    #         self.label_dict[_new_device].setPixmap(QtGui.QPixmap("komp.png"))
+    #     else:
+    #         self.label_dict[_new_device].setGeometry(QtCore.QRect(300, 300, 70, 70))
+    #         self.label_dict[_new_device].setPixmap(QtGui.QPixmap("srv.png"))
+    #         print(self.label_dict[_new_device])
 
     def setup_terminal(self, _chosen_device):
         if _chosen_device:
             self.ui.setup_term_ui(self.window, _chosen_device)
             self.window.show()
             self.load_terminal_entry(_chosen_device, True)
-            self.ui.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.ui.terminal.text(), True))
-
+            self.ui.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.ui.terminal.text(),
+                                                                                              True))
+    def start_threads(self):
+        pass
+    
     def generate_default(self):
-        self.create_new_device("PC1", "1.112.11.69", tor_network, False)
-        self.create_new_device("PC2", "11.22.33.44", tor_network, False)
-        self.create_new_device("PC3", "04.03.02.01", tor_network, False)
+        self.create_new_device("PC1", "1.112.11.69", False)
+        self.create_new_device("PC2", "11.22.33.44", False)
+        self.create_new_device("PC3", "04.03.02.01", False)
 
-        self.create_new_device("SRV1", "11.11.11.11", tor_network, True)
-        self.create_new_device("SRV2", "22.22.22.22", tor_network, True)
-        self.create_new_device("SRV3", "33.33.33.33", tor_network, True)
-        self.create_new_device("SRV4", "44.44.44.44", tor_network, True)
-        self.create_new_device("SRV5", "55.55.55.55", tor_network, True)
-        self.create_new_device("SRV6", "66.66.66.66", tor_network, True)
-        self.create_new_device("SRV7", "77.77.77.77", tor_network, True)
+        self.create_new_device("SRV1", "11.11.11.11", True)
+        self.create_new_device("SRV2", "22.22.22.22", True)
+        self.create_new_device("SRV3", "33.33.33.33", True)
+        self.create_new_device("SRV4", "44.44.44.44", True)
+        self.create_new_device("SRV5", "55.55.55.55", True)
+        self.create_new_device("SRV6", "66.66.66.66", True)
+        self.create_new_device("SRV7", "77.77.77.77", True)
 
+        self.computerListButton.click()
         for host in tor_network.server_list + tor_network.computer_list:
             host.start()
 
@@ -315,9 +320,11 @@ if __name__ == "__main__":
 
     mkdir("logs")
 
+    tor_network = torNetwork.TorNetwork([], [])
+
     app = QtWidgets.QApplication(sys.argv)
     OnionRouting = QtWidgets.QMainWindow()
-    ui = UiMainWindow()
+    ui = UiMainWindow(tor_network)
     ui.setup_ui(OnionRouting)
     OnionRouting.show()
 

@@ -34,7 +34,7 @@ srv6 = server.Server("SRV6", "66.66.66.66", tor_network)
 for host in tor_network.server_list + tor_network.computer_list:
     host.start()
 ######################################################################################################################
-pc1.log_write("console", pc1.execute_command("onion init 04.03.02.01"))
+pc1.log_write("console", pc1.execute_command(""))
 pc1.log_write("console", pc1.execute_command('onion message 0 "wiadomosc do przeslania hehe dziala"'))
 sleep(1)
 pc1.log_write("console", pc1.execute_command("onion finalize 0"))

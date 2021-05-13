@@ -130,7 +130,10 @@ class Computer(device.Device):
     def execute_command(self, line):
         self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(device.parse_command_line(line))
-        current = next(commands)
+        try:
+            current = next(commands)
+        except StopIteration:
+            return "\n"
         if current == "show":
             return self.show_command(commands)
         if current == "onion":

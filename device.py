@@ -193,7 +193,10 @@ class Device(threading.Thread):
     def execute_command(self, line):
         self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(parse_command_line(line))
-        current = next(commands)
+        try:
+            current = next(commands)
+        except StopIteration:
+            return "\n"
         if current == "show":
             return self.show_command(commands)
         if current == "change":
@@ -223,8 +226,11 @@ class Device(threading.Thread):
             return "Name already in use! Choose different one!\n"
         rename(path.join(getcwd(), "logs", "console_" + self.name + ".txt"),
                path.join(getcwd(), "logs", "console_" + current + ".txt"))
-        rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
-               path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
+        try:
+            rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
+                   path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
+        except FileNotFoundError:
+            pass
         rename(path.join(getcwd(), "keys", self.name + "_public_key.txt"),
                path.join(getcwd(), "keys", current + "_public_key.txt"))
         rename(path.join(getcwd(), "keys", self.name + "_private_key.txt"),
