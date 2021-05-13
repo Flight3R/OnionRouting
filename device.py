@@ -223,8 +223,11 @@ class Device(threading.Thread):
             return "Name already in use! Choose different one!\n"
         rename(path.join(getcwd(), "logs", "console_" + self.name + ".txt"),
                path.join(getcwd(), "logs", "console_" + current + ".txt"))
-        rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
-               path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
+        try:
+            rename(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
+                   path.join(getcwd(), "logs", "sniff_" + current + ".txt"))
+        except FileNotFoundError:
+            pass
         rename(path.join(getcwd(), "keys", self.name + "_public_key.txt"),
                path.join(getcwd(), "keys", current + "_public_key.txt"))
         rename(path.join(getcwd(), "keys", self.name + "_private_key.txt"),

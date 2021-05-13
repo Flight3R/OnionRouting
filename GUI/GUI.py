@@ -66,7 +66,6 @@ class UiMainWindow(object):
         self.window = QtWidgets.QMainWindow()
         self.chosen_device = None
         self.label_dict = {}
-        self.lista = []
 
     def setup_ui(self, MainWindow):
 
@@ -259,17 +258,17 @@ class UiMainWindow(object):
         if isServer:
             new_srv = server.Server(name, ip_address, _tor_network)
             self.listComboBox.addItem(str(new_srv))
-            self.gwono = QtWidgets.QLabel(self.centralwidget)
-            self.gwono.setGeometry(QtCore.QRect(390, 400, 70, 70))
-            self.gwono.setPixmap(QtGui.QPixmap("srv.png"))
-            self.retranslate_ui(OnionRouting)
-            OnionRouting.show()
-            self.lista.append(self.gwono)
-            print("XD")
+            self.label_dict[new_srv] = QtWidgets.QLabel(self.centralwidget)
+            self.label_dict[new_srv].setGeometry(QtCore.QRect(390, 400, 70, 70))
+            self.label_dict[new_srv].setPixmap(QtGui.QPixmap("srv.png"))
+            self.label_dict[new_srv].show()
         else:
             new_computer = computer.Computer(name, ip_address, _tor_network)
             self.listComboBox.addItem(str(new_computer))
-            self.create_label(new_computer)
+            self.label_dict[new_computer] = QtWidgets.QLabel(self.centralwidget)
+            self.label_dict[new_computer].setGeometry(QtCore.QRect(390, 400, 82, 84))
+            self.label_dict[new_computer].setPixmap(QtGui.QPixmap("pc.png"))
+            self.label_dict[new_computer].show()
 
     def set_random_address(self, address):
         self.addressEdit.setText(address)
@@ -287,10 +286,11 @@ class UiMainWindow(object):
             if general:
                 self.ui.terminalEntry.clear()
             with open(path.join(getcwd(), "logs", "console_" + _chosen_device.name + ".txt"), "r") as file:
-                for line in file:
-                    self.terminalEntry.addItem(line)
-                    if general:
-                        self.ui.terminalEntry.addItem(line)
+                data = file.readlines()
+            for line in data[::-1]:
+                self.terminalEntry.addItem(line)
+                if general:
+                    self.ui.terminalEntry.addItem(line)
         except FileNotFoundError:
             pass
 
@@ -302,23 +302,23 @@ class UiMainWindow(object):
             self.ui.terminal.clear()
             self.load_terminal_entry(self.chosen_device, True)
 
-    def create_label(self, _new_device):
-        self.label_dict[_new_device] = QtWidgets.QLabel(self.centralwidget)
-        if isinstance(_new_device, computer.Computer):
-            self.label_dict[_new_device].setGeometry(QtCore.QRect(500, 500, 82, 74))
-            self.label_dict[_new_device].setPixmap(QtGui.QPixmap("komp.png"))
-        else:
-            self.label_dict[_new_device].setGeometry(QtCore.QRect(300, 300, 70, 70))
-            self.label_dict[_new_device].setObjectName("provny labe")
-            self.label_dict[_new_device].setPixmap(QtGui.QPixmap("srv.png"))
-            print(self.label_dict[_new_device])
+    # def create_label(self, _new_device):
+    #     self.label_dict[_new_device] = QtWidgets.QLabel(self.centralwidget)
+    #     if isinstance(_new_device, computer.Computer):
+    #         self.label_dict[_new_device].setGeometry(QtCore.QRect(500, 500, 82, 74))
+    #         self.label_dict[_new_device].setPixmap(QtGui.QPixmap("komp.png"))
+    #     else:
+    #         self.label_dict[_new_device].setGeometry(QtCore.QRect(300, 300, 70, 70))
+    #         self.label_dict[_new_device].setPixmap(QtGui.QPixmap("srv.png"))
+    #         print(self.label_dict[_new_device])
 
     def setup_terminal(self, _chosen_device):
         if _chosen_device:
             self.ui.setup_term_ui(self.window, _chosen_device)
             self.window.show()
             self.load_terminal_entry(_chosen_device, True)
-            self.ui.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.ui.terminal.text(), True))
+            self.ui.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.ui.terminal.text(),
+                                                                                              True))
 
 
 if __name__ == "__main__":
