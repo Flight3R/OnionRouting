@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
 import connection
 import device
+import torNetwork
 
 
 def rsa_encrypt(key, data):
@@ -32,9 +33,7 @@ class Computer(device.Device):
     def connection_init(self, dest_addr):
         port = random.randint(4000, 65535)
         servers = random.sample(self.tor_network.server_list, 3)
-        print("servers:", end="\t")
-        [print(i, end="\t") for i in servers]
-        print()
+        self.log_write("console", "servers: {}".format("\t".join(servers)))
         new_connection = connection.Connection(servers[0].ip_address, port, None, dest_addr)
 
         # generate symmetric keys and initialization vectors
@@ -166,8 +165,8 @@ class Computer(device.Device):
             address = next(commands)
         except StopIteration:
             return syntax
-        if not device.check_address_octets(address) or address in [srv.ip_address for srv in
-                                                                   self.tor_network.server_list]:
+        if not torNetwork.check_address_octets(address) or address in [srv.ip_address for srv in
+                                                                       self.tor_network.server_list]:
             return "Not a valid PC address! " + syntax
         self.connection_init(address)
         return "Initialization sent.\n"

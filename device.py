@@ -1,13 +1,14 @@
 
 import threading
-from re import findall, sub
-from random import randint
+from re import findall
 from time import sleep, time
 from os import getcwd, path, rename
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from torNetwork import check_address_octets
 
 
 def aes_encrypt(key, init_vector, data):
@@ -19,36 +20,6 @@ def aes_encrypt(key, init_vector, data):
 def aes_decrypt(key, init_vector, encrypted):
     cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector))
     return cipher.decryptor().update(encrypted)
-
-
-def validate_address(address, network):
-    if not check_address_octets(address):
-        address = random_address()
-    while not network.allow_address(address):
-        address = random_address()
-    return remove_prefix_zeros(address)
-
-
-def check_address_octets(address):
-    try:
-        is_correct = not any([int(octet) < 0 or int(octet) > 255 for octet in address.split(".")])
-        return is_correct
-    except ValueError:
-        return False
-
-
-def random_address():
-    address = ""
-    for _ in range(4):
-        address += str(randint(0, 255)) + "."
-    return address[:-1]
-
-
-def remove_prefix_zeros(address):
-    stripped_address = ""
-    for octal in address.split("."):
-        stripped_address += str(int(octal)) + "."
-    return stripped_address[:-1]
 
 
 def split_to_packets(message):
@@ -147,8 +118,8 @@ class Device(threading.Thread):
     def __init__(self, name, ip_address, tor_network):
         threading.Thread.__init__(self)
         self.name = name
-        self.ip_address = validate_address(ip_address, tor_network)
         self.tor_network = tor_network
+        self.ip_address = tor_network.validate_address(ip_address)
         self.connection_list = []
         self.buffer = []
         self.splitter = b"<<-<<"
@@ -248,7 +219,7 @@ class Device(threading.Thread):
             current = next(commands)
         except StopIteration:
             return "Syntax: change address <new_address>\n"
-        if not check_address_octets(current) or not self.tor_network.allow_address(current):
+        if not self.tor_network.allow_address(current):
             return "Not a valid address!\n"
         if len(self.connection_list) != 0:
             return "Cannot change address with open connections!\n"
