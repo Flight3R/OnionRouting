@@ -1,7 +1,6 @@
 
-
 import threading
-from re import findall
+from re import findall, sub
 from random import randint
 from time import sleep, time
 from os import getcwd, path, rename
@@ -27,7 +26,7 @@ def validate_address(address, network):
         address = random_address()
     while not network.allow_address(address):
         address = random_address()
-    return address
+    return remove_prefix_zeros(address)
 
 
 def check_address_octets(address):
@@ -43,6 +42,13 @@ def random_address():
     for _ in range(4):
         address += str(randint(0, 255)) + "."
     return address[:-1]
+
+
+def remove_prefix_zeros(address):
+    stripped_address = ""
+    for octal in address.split("."):
+        stripped_address += str(int(octal)) + "."
+    return stripped_address[:-1]
 
 
 def split_to_packets(message):
@@ -153,7 +159,6 @@ class Device(threading.Thread):
             self.private_key = generate_private_key(self.name)
             self.public_key = generate_public_key(self.name, self.private_key)
         self.run_event = threading.Event()
-        self.run_event.set()
 
     def __str__(self):
         return self.name + "[" + self.ip_address + "]"
@@ -173,7 +178,7 @@ class Device(threading.Thread):
 
     def connections_timeout_check(self):
         for conn in self.connection_list:
-            if time() - conn.timeout > 10:
+            if time() - conn.timeout > 240:
                 self.connection_list.remove(conn)
 
     def run(self):

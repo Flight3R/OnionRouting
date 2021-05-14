@@ -177,7 +177,9 @@ class UiMainWindow(object):
         self.listComboBox.activated.connect(lambda: self.choose_device())
         self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
         self.terminalWindowButton.clicked.connect(lambda: self.setup_terminal(self.chosen_device))
-        # self.onThreadButton(lambda: se)
+        self.onThreadButton.clicked.connect(lambda: self.start_threads())
+        self.offThreadButton.clicked.connect(lambda: self.stop_threads())
+        self.stepButton.clicked.connect(lambda: self.step_on_thread())
 
         self.retranslate_ui(main_window)
         QtCore.QMetaObject.connectSlotsByName(main_window)
@@ -252,7 +254,7 @@ class UiMainWindow(object):
             with open(path.join(getcwd(), "logs", "console_" + _chosen_device.name + ".txt"), "r") as file:
                 data = file.readlines()
             for line in data[::-1]:
-                self.terminalEntry.addItem(line)
+                self.terminalEntry.addItem(line.removesuffix("\n"))
                 if general:
                     self.ui.terminalEntry.addItem(line)
         except FileNotFoundError:
@@ -283,12 +285,25 @@ class UiMainWindow(object):
             self.load_terminal_entry(_chosen_device, True)
             self.ui.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.ui.terminal.text(),
                                                                                               True))
+
     def start_threads(self):
-        pass
-    
+        for host in self.tor_network.server_list + self.tor_network.computer_list:
+            host.run_event.set()
+            host.start()
+
+    def stop_threads(self):
+        for host in self.tor_network.server_list + self.tor_network.computer_list:
+            host.run_event.clear()
+            host.join()
+
+    def step_on_thread(self):
+        for host in self.tor_network.server_list + self.tor_network.computer_list:
+            host.connections_timeout_check()
+            host.buffer_check()
+
     def generate_default(self):
-        self.create_new_device("PC1", "1.112.11.69", False)
-        self.create_new_device("PC2", "11.22.33.44", False)
+        self.create_new_device("PC1", "01.02.03.04", False)
+        self.create_new_device("PC2", "1.2.3.4", False)
         self.create_new_device("PC3", "04.03.02.01", False)
 
         self.create_new_device("SRV1", "11.11.11.11", True)
@@ -300,8 +315,7 @@ class UiMainWindow(object):
         self.create_new_device("SRV7", "77.77.77.77", True)
 
         self.computerListButton.click()
-        for host in tor_network.server_list + tor_network.computer_list:
-            host.start()
+        self.onThreadButton.click()
 
 
 if __name__ == "__main__":
@@ -329,9 +343,5 @@ if __name__ == "__main__":
     OnionRouting.show()
 
     ui.generate_default()
-
-    for host in tor_network.server_list + tor_network.computer_list:
-        host.run_event.clear()
-        host.join()
 
     sys.exit(app.exec_())
