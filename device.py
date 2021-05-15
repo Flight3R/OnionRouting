@@ -1,14 +1,13 @@
-
-
 import threading
 from re import findall
-from random import randint
 from time import sleep, time
-from os import getcwd, path, rename
+from os import getcwd, path, rename, remove
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from torNetwork import check_address_octets
 
 
 def aes_encrypt(key, init_vector, data):
@@ -20,29 +19,6 @@ def aes_encrypt(key, init_vector, data):
 def aes_decrypt(key, init_vector, encrypted):
     cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector))
     return cipher.decryptor().update(encrypted)
-
-
-def validate_address(address, network):
-    if not check_address_octets(address):
-        address = random_address()
-    while not network.allow_address(address):
-        address = random_address()
-    return address
-
-
-def check_address_octets(address):
-    try:
-        is_correct = not any([int(octet) < 0 or int(octet) > 255 for octet in address.split(".")])
-        return is_correct
-    except ValueError:
-        return False
-
-
-def random_address():
-    address = ""
-    for _ in range(4):
-        address += str(randint(0, 255)) + "."
-    return address[:-1]
 
 
 def split_to_packets(message):
@@ -141,8 +117,8 @@ class Device(threading.Thread):
     def __init__(self, name, ip_address, tor_network):
         threading.Thread.__init__(self)
         self.name = name
-        self.ip_address = validate_address(ip_address, tor_network)
         self.tor_network = tor_network
+        self.ip_address = tor_network.validate_address(ip_address)
         self.connection_list = []
         self.buffer = []
         self.splitter = b"<<-<<"
@@ -153,11 +129,9 @@ class Device(threading.Thread):
             self.private_key = generate_private_key(self.name)
             self.public_key = generate_public_key(self.name, self.private_key)
         self.run_event = threading.Event()
-        self.run_event.set()
 
     def __str__(self):
         return self.name + "[" + self.ip_address + "]"
-
 
     def log_write(self, file_type, log_message):
         if file_type == "console":
@@ -174,7 +148,7 @@ class Device(threading.Thread):
 
     def connections_timeout_check(self):
         for conn in self.connection_list:
-            if time() - conn.timeout > 10:
+            if time() - conn.timeout > 240:
                 self.connection_list.remove(conn)
 
     def run(self):
@@ -190,7 +164,18 @@ class Device(threading.Thread):
         except ConnectionError as exception:
             self.log_write("console", "{}: {}".format(self, exception))
 
-# COMMAND EXECUTION BLOCK
+    def remove_dirs(self):
+        dirs = [path.join(getcwd(), "logs", "console_" + self.name + ".txt"),
+                path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"),
+                path.join(getcwd(), "keys", (self.name + "_public_key.txt")),
+                path.join(getcwd(), "keys", (self.name + "_private_key.txt"))]
+        for _dir in dirs:
+            try:
+                remove(_dir)
+            except FileNotFoundError:
+                pass
+
+    # COMMAND EXECUTION BLOCK
     def execute_command(self, line):
         self.log_write("console", "{}$>> {}".format(str(self), line))
         commands = iter(parse_command_line(line))
@@ -244,7 +229,7 @@ class Device(threading.Thread):
             current = next(commands)
         except StopIteration:
             return "Syntax: change address <new_address>\n"
-        if not check_address_octets(current) or not self.tor_network.allow_address(current):
+        if not self.tor_network.allow_address(current):
             return "Not a valid address!\n"
         if len(self.connection_list) != 0:
             return "Cannot change address with open connections!\n"
@@ -280,7 +265,9 @@ class Device(threading.Thread):
             conn_number = next(commands)
             try:
                 return self.connection_list[int(conn_number)].get_detail()
-            except ValueError or IndexError:
+            except ValueError:
+                return "No such connection!\n"
+            except IndexError:
                 return "No such connection!\n"
         except StopIteration:
             result = ""

@@ -22,11 +22,15 @@ def rsa_decrypt(key, encrypted):
 class Server(device.Device):
     def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
-        tor_network.server_list.append(self)
+        self.tor_network.server_list.append(self)
         try:
             self.image = Image.open("srv.png")
         except FileNotFoundError:
             pass
+
+    def remove(self):
+        self.tor_network.server_list.remove(self)
+        self.run_event.clear()
 
     def handle_forward_connection(self, current_connection, raw_data):
         try:

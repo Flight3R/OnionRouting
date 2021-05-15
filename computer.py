@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import asymmetric
 import connection
 import device
+import torNetwork
 
 
 def rsa_encrypt(key, data):
@@ -23,20 +24,22 @@ def rsa_encrypt(key, data):
 class Computer(device.Device):
     def __init__(self, name, ip_address, tor_network):
         super().__init__(name, ip_address, tor_network)
-        tor_network.computer_list.append(self)
+        self.tor_network.computer_list.append(self)
         try:
             self.image = Image.open("pc.png")
         except FileNotFoundError:
             pass
 
+    def remove(self):
+        self.tor_network.computer_list.remove(self)
+        self.run_event.clear()
+
     def connection_init(self, dest_addr):
         port = random.randint(4000, 65535)
         servers = random.sample(self.tor_network.server_list, 3)
-        print("servers:", end="\t")
-        [print(i, end="\t") for i in servers]
-        print()
+        self.log_write("console", "servers: {}".format("\t".join([str(i) for i in servers])))
         new_connection = connection.Connection(servers[0].ip_address, port, None, dest_addr)
-
+        new_connection.servers = servers
         # generate symmetric keys and initialization vectors
         for _ in range(3):
             new_connection.symmetric_keys.append(os.urandom(16))
@@ -166,24 +169,27 @@ class Computer(device.Device):
             address = next(commands)
         except StopIteration:
             return syntax
-        if not device.check_address_octets(address) or address in [srv.ip_address for srv in
-                                                                   self.tor_network.server_list]:
+        if not torNetwork.check_address_octets(address) or address in [srv.ip_address for srv in
+                                                                       self.tor_network.server_list]:
             return "Not a valid PC address! " + syntax
         self.connection_init(address)
         return "Initialization sent.\n"
 
     def message_command(self, commands):
+        syntax = 'Syntax: onion message <number> "<message_text>"\n'
         try:
             number = next(commands)
             message = next(commands)
         except StopIteration:
-            return 'Syntax: onion message <number> "<message_text>"\n'
+            return syntax
         try:
             conn = self.connection_list[int(number)]
             self.onion_message(conn, message)
             return "Message sent.\n"
-        except IndexError or ValueError:
-            return "No such connection!\n"
+        except IndexError:
+            return "No such connection!" + syntax
+        except ValueError:
+            return "No such connection!" + syntax
 
     def finalize_command(self, commands):
         syntax = "Syntax: onion finalize <number>\n"
@@ -195,5 +201,7 @@ class Computer(device.Device):
             conn = self.connection_list[int(number)]
             self.connection_finalize(conn)
             return "Connection finalized.\n"
-        except IndexError or ValueError:
+        except IndexError:
+            return "No such connection! " + syntax
+        except ValueError:
             return "No such connection! " + syntax
