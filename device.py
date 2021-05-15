@@ -158,6 +158,7 @@ class Device(threading.Thread):
     def __str__(self):
         return self.name + "[" + self.ip_address + "]"
 
+
     def log_write(self, file_type, log_message):
         if file_type == "console":
             print(log_message)
