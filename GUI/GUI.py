@@ -242,28 +242,28 @@ class UiMainWindow(threading.Thread):
         self.choose_device(self.listComboBox.currentText())
 
     def create_new_device(self, name, ip_address, is_server):
-
-        new_label = MyLabel(self.centralwidget)
-        if is_server:
-            new_srv = server.Server(name, ip_address, self.tor_network)
-            self.listComboBox.addItem(str(new_srv))
-            position = choice(self.server_drop_list)
-            self.server_drop_list.remove(position)
-            new_label.setGeometry(QtCore.QRect(position[0], position[1], 70, 70))
-            new_label.setPixmap(QtGui.QPixmap("srv.png"))
-            new_label.show()
-            self.label_dict[new_label] = new_srv
-            self.label_dict[new_srv] = new_label
-        else:
-            new_computer = computer.Computer(name, ip_address, self.tor_network)
-            self.listComboBox.addItem(str(new_computer))
-            position = choice(self.computer_drop_list)
-            self.computer_drop_list.remove(position)
-            new_label.setGeometry(QtCore.QRect(position[0], position[1], 82, 74))
-            new_label.setPixmap(QtGui.QPixmap("pc.png"))
-            new_label.show()
-            self.label_dict[new_label] = new_computer
-            self.label_dict[new_computer] = new_label
+        if self.tor_network.allow_name(name) and self.tor_network.allow_address(ip_address):
+            new_label = MyLabel(self.centralwidget)
+            if is_server:
+                new_srv = server.Server(name, ip_address, self.tor_network)
+                self.listComboBox.addItem(str(new_srv))
+                position = choice(self.server_drop_list)
+                self.server_drop_list.remove(position)
+                new_label.setGeometry(QtCore.QRect(position[0], position[1], 70, 70))
+                new_label.setPixmap(QtGui.QPixmap("srv.png"))
+                new_label.show()
+                self.label_dict[new_label] = new_srv
+                self.label_dict[new_srv] = new_label
+            else:
+                new_computer = computer.Computer(name, ip_address, self.tor_network)
+                self.listComboBox.addItem(str(new_computer))
+                position = choice(self.computer_drop_list)
+                self.computer_drop_list.remove(position)
+                new_label.setGeometry(QtCore.QRect(position[0], position[1], 82, 74))
+                new_label.setPixmap(QtGui.QPixmap("pc.png"))
+                new_label.show()
+                self.label_dict[new_label] = new_computer
+                self.label_dict[new_computer] = new_label
 
     def set_random_address(self, address):
         self.addressEdit.setText(address)
@@ -373,7 +373,7 @@ class UiMainWindow(threading.Thread):
                             break
                     else:
                         self.label_dict.get(_server).setPixmap(QtGui.QPixmap("srv.png"))
-            sleep(0.5)
+            sleep(1)
 
 
 

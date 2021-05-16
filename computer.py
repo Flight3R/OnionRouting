@@ -121,7 +121,7 @@ class Computer(device.Device):
             except StopIteration:
                 message = packet[3]
                 self.log_write("console", "{}:\treceived message from: {}:{}\tlength: {}\tmessage: {}"
-                               .format(self, packet[0], packet[2], len(message), message))
+                               .format(self, packet[0], packet[2], len(message), message.decode()))
 
 # COMMAND EXECUTION BLOCK
     def execute_command(self, line):
@@ -136,7 +136,7 @@ class Computer(device.Device):
         if current == "onion":
             return self.onion_command(commands)
         if current == "message":
-            return self.onion_msg_command(commands)
+            return self.message_command(commands)
         if current == "change":
             return self.change_command(commands)
         if current == "":
@@ -193,7 +193,7 @@ class Computer(device.Device):
             message = next(commands)
         except StopIteration:
             return syntax
-        self.form_and_send_packet(address, port, message)
+        self.form_and_send_packet(address, port, message.encode())
         return ""
 
     def onion_fin_command(self, commands):
