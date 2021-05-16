@@ -242,6 +242,7 @@ class UiMainWindow(threading.Thread):
         self.choose_device(self.listComboBox.currentText())
 
     def create_new_device(self, name, ip_address, is_server):
+
         new_label = MyLabel(self.centralwidget)
         if is_server:
             new_srv = server.Server(name, ip_address, self.tor_network)

@@ -88,7 +88,7 @@ class Computer(device.Device):
             self.form_and_send_packet(current_connection.source_addr, current_connection.source_port, data)
         self.connection_list.remove(current_connection)
 
-    def handle_self_connection(self, current_connection, raw_data):
+    def handle_known_connection(self, current_connection, raw_data):
         for i in range(3):
             try:
                 raw_data = device.aes_decrypt(current_connection.symmetric_keys[i], current_connection.init_vectors[i],
@@ -107,14 +107,6 @@ class Computer(device.Device):
                            .format(self, current_connection.dest_addr, len(unpadded_message), unpadded_message))
             current_connection.data_buffer = []
 
-    def handle_new_connection(self, packet):
-        message = packet[3]
-        self.log_write("console", "{}:\treceived message from: {}\tlength: {}\tmessage: {}\tresponding..."
-                       .format(self, packet[0], len(message), message))
-        # write from keyboard
-        response = b" */*/* odpowiedz na zapytanie jakas zeby byla fajnie by bylo jakby zadzialalo w koncu, totez musi miec wiecej niz 128 bitow dlatego tak duzo pisze"
-        self.form_and_send_packet(packet[0], packet[2], response)
-
     def buffer_check(self):
         while len(self.buffer) != 0:
             packet = self.buffer.pop(0)
@@ -124,10 +116,12 @@ class Computer(device.Device):
             try:
                 current_connection = next(filter(lambda c: c.source_port == packet[2], self.connection_list))
                 current_connection.timeout = time()
-                self.handle_self_connection(current_connection, packet[3])
+                self.handle_known_connection(current_connection, packet[3])
 
             except StopIteration:
-                self.handle_new_connection(packet)
+                message = packet[3]
+                self.log_write("console", "{}:\treceived message from: {}:{}\tlength: {}\tmessage: {}"
+                               .format(self, packet[0], packet[2], len(message), message))
 
 # COMMAND EXECUTION BLOCK
     def execute_command(self, line):
@@ -142,7 +136,7 @@ class Computer(device.Device):
         if current == "onion":
             return self.onion_command(commands)
         if current == "message":
-            return self.message_command(commands)
+            return self.onion_msg_command(commands)
         if current == "change":
             return self.change_command(commands)
         if current == "":
@@ -150,17 +144,17 @@ class Computer(device.Device):
         return "Unknown command! Available: show, onion, message, change\n"
 
     def onion_command(self, commands):
-        syntax = "Syntax: onion {init|message|finalize}\n"
+        syntax = "Syntax: onion {init|msg|fin}\n"
         try:
             current = next(commands)
         except StopIteration:
             return syntax
         if current == "init":
             return self.init_command(commands)
-        if current == "message":
-            return self.message_command(commands)
-        if current == "finalize":
-            return self.finalize_command(commands)
+        if current == "msg":
+            return self.onion_msg_command(commands)
+        if current == "fin":
+            return self.onion_fin_command(commands)
         return "Unknown command! " + syntax
 
     def init_command(self, commands):
@@ -175,8 +169,8 @@ class Computer(device.Device):
         self.connection_init(address)
         return "Initialization sent.\n"
 
-    def message_command(self, commands):
-        syntax = 'Syntax: onion message <number> "<message_text>"\n'
+    def onion_msg_command(self, commands):
+        syntax = 'Syntax: onion msg <number> "<message_text>"\n'
         try:
             number = next(commands)
             message = next(commands)
@@ -191,8 +185,19 @@ class Computer(device.Device):
         except ValueError:
             return "No such connection!" + syntax
 
-    def finalize_command(self, commands):
-        syntax = "Syntax: onion finalize <number>\n"
+    def message_command(self, commands):
+        syntax = 'Syntax: message <pc_ip_address> <port> "<message_text>"\n'
+        try:
+            address = next(commands)
+            port = next(commands)
+            message = next(commands)
+        except StopIteration:
+            return syntax
+        self.form_and_send_packet(address, port, message)
+        return ""
+
+    def onion_fin_command(self, commands):
+        syntax = "Syntax: onion fin <number>\n"
         try:
             number = next(commands)
         except StopIteration:
