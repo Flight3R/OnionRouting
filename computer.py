@@ -170,7 +170,7 @@ class Computer(device.Device):
         return "Initialization sent.\n"
 
     def onion_msg_command(self, commands):
-        syntax = 'Syntax: onion msg <number> "<message_text>"\n'
+        syntax = 'Syntax: onion msg <number> "<message text>"\n'
         try:
             number = next(commands)
             message = next(commands)
@@ -186,15 +186,17 @@ class Computer(device.Device):
             return "No such connection!" + syntax
 
     def message_command(self, commands):
-        syntax = 'Syntax: message <pc_ip_address> <port> "<message_text>"\n'
+        syntax = 'Syntax: message <pc_ip_address> <port> "<message text>"\n'
         try:
             address = next(commands)
-            port = next(commands)
+            port = int(next(commands))
             message = next(commands)
         except StopIteration:
             return syntax
-        self.form_and_send_packet(address, port, message.encode())
-        return ""
+        except ValueError:
+            return "Invalid port number! " + syntax
+        self.form_and_send_packet(address, int(port), message.encode())
+        return "\n"
 
     def onion_fin_command(self, commands):
         syntax = "Syntax: onion fin <number>\n"
