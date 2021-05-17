@@ -24,8 +24,8 @@ def strip_address_zeros(address):
 
 
 class TorNetwork:
-    def __init__(self, server_list, computer_list):
-        self.server_list = server_list
+    def __init__(self, node_list, computer_list):
+        self.node_list = node_list
         self.computer_list = computer_list
 
     def validate_address(self, address):
@@ -40,15 +40,15 @@ class TorNetwork:
             stripped_address = strip_address_zeros(address)
         except ValueError:
             return False
-        is_free = not any([host.ip_address == stripped_address for host in self.computer_list + self.server_list])
+        is_free = not any([host.ip_address == stripped_address for host in self.computer_list + self.node_list])
         return is_free
 
     def allow_name(self, name):
-        is_free = not any([host.name == name for host in self.server_list + self.computer_list])
+        is_free = not any([host.name == name for host in self.node_list + self.computer_list])
         return is_free
 
     def serve_packet_transfer(self, packet):
-        for host in self.server_list + self.computer_list:
+        for host in self.node_list + self.computer_list:
             if packet[1] == host.ip_address:
                 host.buffer.append(packet)
                 break

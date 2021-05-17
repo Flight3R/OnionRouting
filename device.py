@@ -237,7 +237,7 @@ class Device(threading.Thread):
         return "Address changed.\n"
 
     def show_command(self, commands):
-        syntax = "Syntax: show {name|address|servers|connections|logs}\n"
+        syntax = "Syntax: show {name|address|nodes|connections|logs}\n"
         try:
             current = next(commands)
         except StopIteration:
@@ -246,18 +246,18 @@ class Device(threading.Thread):
             return self.name + "\n"
         if current == "address":
             return self.ip_address + "\n"
-        if current == "servers":
-            return self.get_servers()
+        if current == "nodes":
+            return self.get_nodes()
         if current == "connections":
             return self.get_connection(commands)
         if current == "logs":
             return self.get_logs(commands)
         return "Unknown command! " + syntax
 
-    def get_servers(self):
+    def get_nodes(self):
         result = ""
-        for server in self.tor_network.server_list:
-            result += server.ip_address + "\n"
+        for node in self.tor_network.node_list:
+            result += node.ip_address + "\n"
         return result
 
     def get_connection(self, commands):

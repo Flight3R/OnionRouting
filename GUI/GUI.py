@@ -16,7 +16,7 @@ from time import sleep
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import computer
-import server
+import node
 import torNetwork
 import termWindow
 
@@ -25,8 +25,8 @@ class MyLabel(QtWidgets.QLabel):
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            if isinstance(ui.label_dict.get(self), server.Server):
-                ui.serverListButton.click()
+            if isinstance(ui.label_dict.get(self), node.Node):
+                ui.nodeListButton.click()
             else:
                 ui.computerListButton.click()
             ui.choose_device(str(ui.label_dict.get(self)))
@@ -41,7 +41,7 @@ class UiMainWindow(threading.Thread):
         self.chosen_device = None
         self.label_dict = {}
         self.tor_network = tor_network
-        self.server_drop_list = []
+        self.node_drop_list = []
         self.computer_drop_list = []
         self.chosen_drag = None
 
@@ -59,12 +59,12 @@ class UiMainWindow(threading.Thread):
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.serverListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.serverListButton.setObjectName("serverListButton")
+        self.nodeListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
+        self.nodeListButton.setObjectName("nodeListButton")
         self.devicesGroup = QtWidgets.QButtonGroup(main_window)
         self.devicesGroup.setObjectName("devicesGroup")
-        self.devicesGroup.addButton(self.serverListButton)
-        self.verticalLayout.addWidget(self.serverListButton)
+        self.devicesGroup.addButton(self.nodeListButton)
+        self.verticalLayout.addWidget(self.nodeListButton)
         self.computerListButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
         self.computerListButton.setObjectName("computerListButton")
         self.devicesGroup.addButton(self.computerListButton)
@@ -118,13 +118,13 @@ class UiMainWindow(threading.Thread):
         self.label_5.setFont(font)
         self.label_5.setAlignment(QtCore.Qt.AlignCenter)
         self.label_5.setObjectName("label_5")
-        self.createServerButton = QtWidgets.QRadioButton(self.groupBox)
-        self.createServerButton.setGeometry(QtCore.QRect(0, 70, 261, 41))
-        self.createServerButton.setObjectName("createServerButton")
-        self.createServerButton.setChecked(True)
+        self.createNodeButton = QtWidgets.QRadioButton(self.groupBox)
+        self.createNodeButton.setGeometry(QtCore.QRect(0, 70, 261, 41))
+        self.createNodeButton.setObjectName("createNodeButton")
+        self.createNodeButton.setChecked(True)
         self.createButtonGroup = QtWidgets.QButtonGroup(main_window)
         self.createButtonGroup.setObjectName("createButtonGroup")
-        self.createButtonGroup.addButton(self.createServerButton)
+        self.createButtonGroup.addButton(self.createNodeButton)
         self.createComputerButton = QtWidgets.QRadioButton(self.groupBox)
         self.createComputerButton.setGeometry(QtCore.QRect(0, 110, 261, 41))
         self.createComputerButton.setObjectName("createComputerButton")
@@ -186,16 +186,16 @@ class UiMainWindow(threading.Thread):
         for i in range(300, 1501, 100):
             for j in range(200, 901, 100):
                 if (301 < i < 1499) and (201 < j < 899):
-                    self.server_drop_list.append((i, j))
+                    self.node_drop_list.append((i, j))
                 else:
                     self.computer_drop_list.append((i, j))
 
         self.computerListButton.clicked.connect(lambda: self.clicked_computer_list_button())
-        self.serverListButton.clicked.connect(lambda: self.clicked_server_list_button())
+        self.nodeListButton.clicked.connect(lambda: self.clicked_node_list_button())
         self.randomAddressButton.clicked.connect(lambda: self.set_random_address(tor_network.validate_address(
             torNetwork.random_address())))
         self.createButton.clicked.connect(lambda: self.create_new_device(
-            self.nameEdit.text(), self.addressEdit.text(), self.createServerButton.isChecked()))
+            self.nameEdit.text(), self.addressEdit.text(), self.createNodeButton.isChecked()))
         self.listComboBox.activated.connect(lambda: self.choose_device(self.listComboBox.currentText()))
         self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
         self.terminalWindowButton.clicked.connect(lambda: self.setup_terminal())
@@ -211,15 +211,15 @@ class UiMainWindow(threading.Thread):
     def retranslate_ui(self, main_window):
         _translate = QtCore.QCoreApplication.translate
         main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.computerListButton.setText(_translate("MainWindow", "Computers\' list"))
-        self.serverListButton.setText(_translate("MainWindow", "Servers\' list"))
-        self.label.setText(_translate("MainWindow", "Server/Computer List"))
+        self.computerListButton.setText(_translate("MainWindow", "Computer list"))
+        self.nodeListButton.setText(_translate("MainWindow", "Node list"))
+        self.label.setText(_translate("MainWindow", "Node/Computer List"))
         self.removeDeviceButton.setText(_translate("MainWindow", "Remove chosen device"))
         self.groupBox.setTitle(_translate("MainWindow", "Add new device"))
         self.label_3.setText(_translate("MainWindow", "Name:"))
         self.label_4.setText(_translate("MainWindow", "IP Address:"))
         self.label_5.setText(_translate("MainWindow", "Choose device:"))
-        self.createServerButton.setText(_translate("MainWindow", "Server"))
+        self.createNodeButton.setText(_translate("MainWindow", "Node"))
         self.createComputerButton.setText(_translate("MainWindow", "Computer"))
         self.createButton.setText(_translate("MainWindow", "Create new device"))
         self.randomAddressButton.setText(_translate("MainWindow", "Random address"))
@@ -235,27 +235,27 @@ class UiMainWindow(threading.Thread):
             self.listComboBox.addItem(str(pc))
         self.choose_device(self.listComboBox.currentText())
 
-    def clicked_server_list_button(self):
+    def clicked_node_list_button(self):
         self.listComboBox.clear()
-        for serv in self.tor_network.server_list:
-            self.listComboBox.addItem(str(serv))
+        for _node in self.tor_network.node_list:
+            self.listComboBox.addItem(str(_node))
         self.choose_device(self.listComboBox.currentText())
 
-    def create_new_device(self, name, ip_address, is_server):
+    def create_new_device(self, name, ip_address, is_node):
         if self.tor_network.allow_name(name) and self.tor_network.allow_address(ip_address):
             new_label = MyLabel(self.centralwidget)
             new_label.setText(ip_address)
             new_label.selectedText()
-            if is_server:
-                new_srv = server.Server(name, ip_address, self.tor_network)
-                self.listComboBox.addItem(str(new_srv))
-                position = choice(self.server_drop_list)
-                self.server_drop_list.remove(position)
+            if is_node:
+                new_node = node.Node(name, ip_address, self.tor_network)
+                self.listComboBox.addItem(str(new_node))
+                position = choice(self.node_drop_list)
+                self.node_drop_list.remove(position)
                 new_label.setGeometry(QtCore.QRect(position[0], position[1], 70, 70))
-                new_label.setPixmap(QtGui.QPixmap("srv.png"))
+                new_label.setPixmap(QtGui.QPixmap("node.png"))
                 new_label.show()
-                self.label_dict[new_label] = new_srv
-                self.label_dict[new_srv] = new_label
+                self.label_dict[new_label] = new_node
+                self.label_dict[new_node] = new_label
             else:
                 new_computer = computer.Computer(name, ip_address, self.tor_network)
                 self.listComboBox.addItem(str(new_computer))
@@ -271,19 +271,19 @@ class UiMainWindow(threading.Thread):
         self.addressEdit.setText(address)
 
     def choose_device(self, device_name):
-        for host in self.tor_network.server_list + self.tor_network.computer_list:
+        for host in self.tor_network.node_list + self.tor_network.computer_list:
             if str(host) == device_name:
                 if self.chosen_device and self.chosen_device != host:
-                    if isinstance(self.chosen_device, server.Server):
-                        self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap("srv.png"))
+                    if isinstance(self.chosen_device, node.Node):
+                        self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap("node.png"))
                     else:
                         self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap("pc.png"))
                 self.chosen_device = host
                 self.load_terminal_entry()
-                if isinstance(self.chosen_device, server.Server):
-                    for _server in self.tor_network.server_list:
-                        self.label_dict.get(_server).setPixmap(QtGui.QPixmap("srv.png"))
-                    self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap("srv_chosen.png"))
+                if isinstance(self.chosen_device, node.Node):
+                    for _node in self.tor_network.node_list:
+                        self.label_dict.get(_node).setPixmap(QtGui.QPixmap("node.png"))
+                    self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap("node_chosen.png"))
                 else:
                     self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap("pc_chosen.png"))
                 break
@@ -321,13 +321,13 @@ class UiMainWindow(threading.Thread):
                                                                                               True))
 
     def start_threads(self):
-        for host in self.tor_network.server_list + self.tor_network.computer_list:
+        for host in self.tor_network.node_list + self.tor_network.computer_list:
             host.run_event.set()
             host.start()
 
     def stop_threads(self):
         try:
-            for host in self.tor_network.server_list + self.tor_network.computer_list:
+            for host in self.tor_network.node_list + self.tor_network.computer_list:
                 host.run_event.clear()
                 host.join()
         except RuntimeError:
@@ -335,7 +335,7 @@ class UiMainWindow(threading.Thread):
 
     def step_on_thread(self):
         try:
-            for host in self.tor_network.server_list + self.tor_network.computer_list:
+            for host in self.tor_network.node_list + self.tor_network.computer_list:
                 host.connections_timeout_check()
                 host.buffer_check()
         except RuntimeError:
@@ -346,13 +346,13 @@ class UiMainWindow(threading.Thread):
         self.create_new_device("PC2", "09.09.09.09", False)
         self.create_new_device("PC3", "04.03.02.01", False)
 
-        self.create_new_device("SRV1", "11.11.11.11", True)
-        self.create_new_device("SRV2", "22.22.22.22", True)
-        self.create_new_device("SRV3", "33.33.33.33", True)
-        self.create_new_device("SRV4", "44.44.44.44", True)
-        self.create_new_device("SRV5", "55.55.55.55", True)
-        self.create_new_device("SRV6", "66.66.66.66", True)
-        self.create_new_device("SRV7", "77.77.77.77", True)
+        self.create_new_device("NODE1", "11.11.11.11", True)
+        self.create_new_device("NODE2", "22.22.22.22", True)
+        self.create_new_device("NODE3", "33.33.33.33", True)
+        self.create_new_device("NODE4", "44.44.44.44", True)
+        self.create_new_device("NODE5", "55.55.55.55", True)
+        self.create_new_device("NODE6", "66.66.66.66", True)
+        self.create_new_device("NODE7", "77.77.77.77", True)
 
         self.computerListButton.click()
         self.onThreadButton.click()
@@ -360,9 +360,9 @@ class UiMainWindow(threading.Thread):
     def remove_device(self):
         x = self.label_dict.get(self.chosen_device).geometry().x()
         y = self.label_dict.get(self.chosen_device).geometry().y()
-        if isinstance(self.chosen_device, server.Server):
-            self.server_drop_list.append((x, y))
-            self.serverListButton.click()
+        if isinstance(self.chosen_device, node.Node):
+            self.node_drop_list.append((x, y))
+            self.nodeListButton.click()
         else:
             self.computer_drop_list.append((x, y))
             self.computerListButton.click()
@@ -374,13 +374,13 @@ class UiMainWindow(threading.Thread):
         while True:
             # self.load_terminal_entry()
             if isinstance(self.chosen_device, computer.Computer):
-                for _server in self.tor_network.server_list:
+                for _node in self.tor_network.node_list:
                     for connection in self.chosen_device.connection_list:
-                        if _server in connection.servers:
-                            self.label_dict.get(_server).setPixmap(QtGui.QPixmap("srv_used.png"))
+                        if _node in connection.nodes:
+                            self.label_dict.get(_node).setPixmap(QtGui.QPixmap("node_used.png"))
                             break
                     else:
-                        self.label_dict.get(_server).setPixmap(QtGui.QPixmap("srv.png"))
+                        self.label_dict.get(_node).setPixmap(QtGui.QPixmap("node.png"))
                 for _computer in self.tor_network.computer_list:
                     for connection in self.chosen_device.connection_list:
                         if _computer.ip_address == connection.dest_addr:

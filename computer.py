@@ -36,10 +36,10 @@ class Computer(device.Device):
 
     def connection_init(self, dest_addr):
         port = random.randint(4000, 65535)
-        servers = random.sample(self.tor_network.server_list, 3)
-        self.log_write("console", "servers: {}".format("\t".join([str(i) for i in servers])))
-        new_connection = connection.Connection(servers[0].ip_address, port, None, dest_addr)
-        new_connection.servers = servers
+        nodes = random.sample(self.tor_network.node_list, 3)
+        self.log_write("console", "nodes: {}".format("\t".join([str(i) for i in nodes])))
+        new_connection = connection.Connection(nodes[0].ip_address, port, None, dest_addr)
+        new_connection.nodes = nodes
         # generate symmetric keys and initialization vectors
         for _ in range(3):
             new_connection.symmetric_keys.append(os.urandom(16))
@@ -47,26 +47,26 @@ class Computer(device.Device):
 
         self.connection_list.append(new_connection)
 
-        # initialize connection with first server
+        # initialize connection with first node
         data = self.splitter.join(
-            [servers[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
-        data = rsa_encrypt(servers[0].public_key, data)
-        self.form_and_send_packet(servers[0].ip_address, port, data)
+            [nodes[1].ip_address.encode(), new_connection.symmetric_keys[0], new_connection.init_vectors[0]])
+        data = rsa_encrypt(nodes[0].public_key, data)
+        self.form_and_send_packet(nodes[0].ip_address, port, data)
 
-        # initialize connection with second server
+        # initialize connection with second node
         data = self.splitter.join(
-            [servers[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
-        data = rsa_encrypt(servers[1].public_key, data)
+            [nodes[2].ip_address.encode(), new_connection.symmetric_keys[1], new_connection.init_vectors[1]])
+        data = rsa_encrypt(nodes[1].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
-        self.form_and_send_packet(servers[0].ip_address, port, data)
+        self.form_and_send_packet(nodes[0].ip_address, port, data)
 
-        # initialize connection with third server
+        # initialize connection with third node
         data = self.splitter.join(
             [dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
-        data = rsa_encrypt(servers[2].public_key, data)
+        data = rsa_encrypt(nodes[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
-        self.form_and_send_packet(servers[0].ip_address, port, data)
+        self.form_and_send_packet(nodes[0].ip_address, port, data)
 
     def onion_message(self, current_connection, message):
         blocks = device.split_to_packets(message.encode())
@@ -161,8 +161,8 @@ class Computer(device.Device):
             address = next(commands)
         except StopIteration:
             return syntax
-        if not torNetwork.check_address_octets(address) or address in [srv.ip_address for srv in
-                                                                       self.tor_network.server_list]:
+        if not torNetwork.check_address_octets(address) or address in [node.ip_address for node in
+                                                                       self.tor_network.node_list]:
             return "Not a valid PC address! " + syntax
         self.connection_init(address)
         return "Initialization sent.\n"

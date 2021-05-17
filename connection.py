@@ -12,7 +12,7 @@ class Connection:
         self.data_buffer = []
         self.is_end_node = False
         self.timeout = time()
-        self.servers = []
+        self.nodes = []
 
     def get_brief(self):
         return "src_addr: {}\tdst_addr: {}\n".format(str(self.source_addr), self.dest_addr)
