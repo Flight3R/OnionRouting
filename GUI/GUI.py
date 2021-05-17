@@ -244,6 +244,8 @@ class UiMainWindow(threading.Thread):
     def create_new_device(self, name, ip_address, is_server):
         if self.tor_network.allow_name(name) and self.tor_network.allow_address(ip_address):
             new_label = MyLabel(self.centralwidget)
+            new_label.setText(ip_address)
+            new_label.selectedText()
             if is_server:
                 new_srv = server.Server(name, ip_address, self.tor_network)
                 self.listComboBox.addItem(str(new_srv))
@@ -324,14 +326,20 @@ class UiMainWindow(threading.Thread):
             host.start()
 
     def stop_threads(self):
-        for host in self.tor_network.server_list + self.tor_network.computer_list:
-            host.run_event.clear()
-            host.join()
+        try:
+            for host in self.tor_network.server_list + self.tor_network.computer_list:
+                host.run_event.clear()
+                host.join()
+        except RuntimeError:
+            pass
 
     def step_on_thread(self):
-        for host in self.tor_network.server_list + self.tor_network.computer_list:
-            host.connections_timeout_check()
-            host.buffer_check()
+        try:
+            for host in self.tor_network.server_list + self.tor_network.computer_list:
+                host.connections_timeout_check()
+                host.buffer_check()
+        except RuntimeError:
+            pass
 
     def generate_default(self):
         self.create_new_device("PC1", "01.02.03.04", False)
@@ -364,7 +372,7 @@ class UiMainWindow(threading.Thread):
 
     def run(self):
         while True:
-            self.load_terminal_entry()
+            # self.load_terminal_entry()
             if isinstance(self.chosen_device, computer.Computer):
                 for _server in self.tor_network.server_list:
                     for connection in self.chosen_device.connection_list:
@@ -373,22 +381,31 @@ class UiMainWindow(threading.Thread):
                             break
                     else:
                         self.label_dict.get(_server).setPixmap(QtGui.QPixmap("srv.png"))
+                for _computer in self.tor_network.computer_list:
+                    for connection in self.chosen_device.connection_list:
+                        if _computer.ip_address == connection.dest_addr:
+                            self.label_dict.get(_computer).setPixmap(QtGui.QPixmap("pc_end.png"))
+                            break
+                    else:
+                        if _computer != self.chosen_device:
+                            self.label_dict.get(_computer).setPixmap(QtGui.QPixmap("pc.png"))
             sleep(1)
-
 
 
 if __name__ == "__main__":
     import sys
 
     try:
+        rmtree("keys")
+    except FileExistsError:
+        pass
+    try:
         mkdir("keys")
     except FileExistsError:
         pass
-
     try:
         rmtree("logs")
     except FileNotFoundError:
-
         pass
 
     mkdir("logs")

@@ -148,7 +148,7 @@ class Device(threading.Thread):
 
     def connections_timeout_check(self):
         for conn in self.connection_list:
-            if time() - conn.timeout > 240:
+            if time() - conn.timeout > 600:
                 self.connection_list.remove(conn)
 
     def run(self):

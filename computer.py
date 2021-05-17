@@ -130,7 +130,7 @@ class Computer(device.Device):
         try:
             current = next(commands)
         except StopIteration:
-            return "\n"
+            return ""
         if current == "show":
             return self.show_command(commands)
         if current == "onion":
@@ -139,8 +139,6 @@ class Computer(device.Device):
             return self.message_command(commands)
         if current == "change":
             return self.change_command(commands)
-        if current == "":
-            return "\n"
         return "Unknown command! Available: show, onion, message, change\n"
 
     def onion_command(self, commands):
