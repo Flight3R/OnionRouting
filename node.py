@@ -74,7 +74,7 @@ class Node(device.Device):
         new_connection.symmetric_keys.append(data[1])
         new_connection.init_vectors.append(data[2])
         try:
-            new_connection.is_end_node = True if data[3] == b"end" else False
+            new_connection.is_end_node = True if data[3] == b"" else False
         except IndexError:
             pass
         self.connection_list.append(new_connection)

@@ -1,9 +1,9 @@
 from random import randint
 
 
-def check_address_octets(address):
+def check_address_octals(address):
     try:
-        is_correct = not any([int(octet) < 0 or int(octet) > 255 for octet in address.split(".")])
+        is_correct = not any([int(octal) < 0 or int(octal) > 255 for octal in address.split(".")])
         return is_correct
     except ValueError:
         return False
@@ -29,7 +29,7 @@ class TorNetwork:
         self.computer_list = computer_list
 
     def validate_address(self, address):
-        if not check_address_octets(address):
+        if not check_address_octals(address):
             address = random_address()
         while not self.allow_address(address):
             address = random_address()

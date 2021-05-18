@@ -194,8 +194,6 @@ class UiMainWindow(threading.Thread):
         self.nodeListButton.clicked.connect(lambda: self.clicked_node_list_button())
         self.randomAddressButton.clicked.connect(lambda: self.set_random_address(tor_network.validate_address(
             torNetwork.random_address())))
-        self.createButton.clicked.connect(lambda: self.create_new_device(
-            self.nameEdit.text(), self.addressEdit.text(), self.createNodeButton.isChecked()))
         self.listComboBox.activated.connect(lambda: self.choose_device(self.listComboBox.currentText()))
         self.terminal.returnPressed.connect(lambda: self.clicked_terminal_enter_button(self.terminal.text()))
         self.terminalWindowButton.clicked.connect(lambda: self.setup_terminal())
@@ -203,7 +201,8 @@ class UiMainWindow(threading.Thread):
         self.offThreadButton.clicked.connect(lambda: self.stop_threads())
         self.removeDeviceButton.clicked.connect(lambda: self.remove_device())
         self.stepButton.clicked.connect(lambda: self.step_on_thread())
-
+        self.createButton.clicked.connect(lambda: self.create_new_device(
+            self.nameEdit.text(), self.addressEdit.text(), self.createNodeButton.isChecked()))
 
         self.retranslate_ui(main_window)
         QtCore.QMetaObject.connectSlotsByName(main_window)
@@ -242,7 +241,7 @@ class UiMainWindow(threading.Thread):
         self.choose_device(self.listComboBox.currentText())
 
     def create_new_device(self, name, ip_address, is_node):
-        if self.tor_network.allow_name(name) and self.tor_network.allow_address(ip_address):
+        if self.tor_network.allow_name(name) and torNetwork.check_address_octals(ip_address) and self.tor_network.allow_address(ip_address):
             new_label = MyLabel(self.centralwidget)
             new_label.setText(ip_address)
             new_label.selectedText()
@@ -397,7 +396,7 @@ if __name__ == "__main__":
 
     try:
         rmtree("keys")
-    except FileExistsError:
+    except FileNotFoundError:
         pass
     try:
         mkdir("keys")

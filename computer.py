@@ -62,7 +62,7 @@ class Computer(device.Device):
 
         # initialize connection with third node
         data = self.splitter.join(
-            [dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b"end"])
+            [dest_addr.encode(), new_connection.symmetric_keys[2], new_connection.init_vectors[2], b""])
         data = rsa_encrypt(nodes[2].public_key, data)
         data = device.aes_encrypt(new_connection.symmetric_keys[1], new_connection.init_vectors[1], data)
         data = device.aes_encrypt(new_connection.symmetric_keys[0], new_connection.init_vectors[0], data)
@@ -161,7 +161,7 @@ class Computer(device.Device):
             address = next(commands)
         except StopIteration:
             return syntax
-        if not torNetwork.check_address_octets(address) or address in [node.ip_address for node in
+        if not torNetwork.check_address_octals(address) or address in [node.ip_address for node in
                                                                        self.tor_network.node_list]:
             return "Not a valid PC address! " + syntax
         self.connection_init(address)

@@ -7,8 +7,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from torNetwork import check_address_octets
-
 
 def aes_encrypt(key, init_vector, data):
     cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector))
