@@ -255,6 +255,8 @@ class UiMainWindow(threading.Thread):
                 new_label.show()
                 self.label_dict[new_label] = new_node
                 self.label_dict[new_node] = new_label
+                new_node.run_event.set()
+                new_node.start()
             else:
                 new_computer = computer.Computer(name, ip_address, self.tor_network)
                 self.listComboBox.addItem(str(new_computer))
@@ -265,6 +267,8 @@ class UiMainWindow(threading.Thread):
                 new_label.show()
                 self.label_dict[new_label] = new_computer
                 self.label_dict[new_computer] = new_label
+                new_computer.run_event.set()
+                new_computer.start()
 
     def set_random_address(self, address):
         self.addressEdit.setText(address)
@@ -320,9 +324,12 @@ class UiMainWindow(threading.Thread):
                                                                                               True))
 
     def start_threads(self):
-        for host in self.tor_network.node_list + self.tor_network.computer_list:
-            host.run_event.set()
-            host.start()
+        try:
+            for host in self.tor_network.node_list + self.tor_network.computer_list:
+                host.run_event.set()
+                host.start()
+        except RuntimeError:
+            pass
 
     def stop_threads(self):
         try:
