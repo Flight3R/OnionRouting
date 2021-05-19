@@ -185,9 +185,30 @@ class Device(threading.Thread):
             return self.show_command(commands)
         if current == "change":
             return self.change_command(commands)
-        if current == "":
-            return "\n"
+        if current == "reset":
+            return self.reset_command(commands)
         return "Unknown command! Available: show, change\n"
+
+    def reset_command(self, commands):
+        syntax = "Syntax: reset {console|sniff}\n"
+        try:
+            current = next(commands)
+        except StopIteration:
+            return syntax
+        if current == "console":
+            try:
+                remove(path.join(getcwd(), "logs", "console_" + self.name + ".txt"))
+            except FileNotFoundError:
+                pass
+            return ""
+        if current == "sniff":
+            try:
+                remove(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"))
+            except FileNotFoundError:
+                pass
+            return ""
+        return "Unknown command! " + syntax
+
 
     def change_command(self, commands):
         syntax = "Syntax: change {name|address}\n"

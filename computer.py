@@ -139,6 +139,8 @@ class Computer(device.Device):
             return self.message_command(commands)
         if current == "change":
             return self.change_command(commands)
+        if current == "reset":
+            return self.reset_command(commands)
         return "Unknown command! Available: show, onion, message, change\n"
 
     def onion_command(self, commands):
