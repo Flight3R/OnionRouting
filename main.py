@@ -57,8 +57,11 @@ for host in tor_network.node_list + tor_network.computer_list:
 #
 # onion
 #     init <ip_address>
-#     message <number> "<message>"
-#     finalize <number>
+#     msg <number> "<message>"
+#     fin <number>
 # change
 #     name <new_name>
 #     address <new_address>
+# reset
+#     console
+#     sniff
