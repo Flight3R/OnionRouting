@@ -146,7 +146,7 @@ class Device(threading.Thread):
 
     def connections_timeout_check(self):
         for conn in self.connection_list:
-            if time() - conn.timeout > 600:
+            if time() - conn.timeout > 6000:
                 self.connection_list.remove(conn)
 
     def run(self):
@@ -180,7 +180,7 @@ class Device(threading.Thread):
         try:
             current = next(commands)
         except StopIteration:
-            return "\n"
+            return ""
         if current == "show":
             return self.show_command(commands)
         if current == "change":
@@ -190,7 +190,7 @@ class Device(threading.Thread):
         return "Unknown command! Available: show, change\n"
 
     def reset_command(self, commands):
-        syntax = "Syntax: reset {console|sniff}\n"
+        syntax = "Syntax: reset {console|sniff|all}\n"
         try:
             current = next(commands)
         except StopIteration:
@@ -207,8 +207,17 @@ class Device(threading.Thread):
             except FileNotFoundError:
                 pass
             return ""
+        if current == "all":
+            try:
+                remove(path.join(getcwd(), "logs", "console_" + self.name + ".txt"))
+            except FileNotFoundError:
+                pass
+            try:
+                remove(path.join(getcwd(), "logs", "sniff_" + self.name + ".txt"))
+            except FileNotFoundError:
+                pass
+            return ""
         return "Unknown command! " + syntax
-
 
     def change_command(self, commands):
         syntax = "Syntax: change {name|address}\n"
