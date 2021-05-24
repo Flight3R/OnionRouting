@@ -346,19 +346,20 @@ class UiMainWindow(threading.Thread):
                 host.buffer_check()
         except RuntimeError:
             pass
+        self.load_terminal_entry()
 
     def generate_default(self):
         self.create_new_device("PC1", "01.02.03.04", False)
         self.create_new_device("PC2", "09.09.09.09", False)
         self.create_new_device("PC3", "04.03.02.01", False)
 
-        self.create_new_device("NODE1", "11.11.11.11", True)
-        self.create_new_device("NODE2", "22.22.22.22", True)
-        self.create_new_device("NODE3", "33.33.33.33", True)
-        self.create_new_device("NODE4", "44.44.44.44", True)
-        self.create_new_device("NODE5", "55.55.55.55", True)
-        self.create_new_device("NODE6", "66.66.66.66", True)
-        self.create_new_device("NODE7", "77.77.77.77", True)
+        self.create_new_device("Esteban", "11.11.11.11", True)
+        self.create_new_device("Mufasa", "22.22.22.22", True)
+        self.create_new_device("Tutini", "33.33.33.33", True)
+        self.create_new_device("Whitecore", "44.44.44.44", True)
+        self.create_new_device("ROKOKO", "55.55.55.55", True)
+        self.create_new_device("Żeromski", "66.66.66.66", True)
+        self.create_new_device("ypmen", "77.77.77.77", True)
 
         self.computerListButton.click()
         self.onThreadButton.click()
@@ -366,19 +367,19 @@ class UiMainWindow(threading.Thread):
     def remove_device(self):
         x = self.label_dict.get(self.chosen_device).geometry().x()
         y = self.label_dict.get(self.chosen_device).geometry().y()
-        if isinstance(self.chosen_device, node.Node):
+        self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap(""))
+        is_node = isinstance(self.chosen_device, node.Node)
+        self.chosen_device.remove()
+        self.chosen_device = None
+        if is_node:
             self.node_drop_list.append((x, y))
             self.nodeListButton.click()
         else:
             self.computer_drop_list.append((x, y))
             self.computerListButton.click()
-        self.label_dict.get(self.chosen_device).setPixmap(QtGui.QPixmap(""))
-        self.chosen_device.remove()
-        self.chosen_device = None
 
     def run(self):
         while True:
-            # self.load_terminal_entry()
             if isinstance(self.chosen_device, computer.Computer):
                 for _node in self.tor_network.node_list:
                     for connection in self.chosen_device.connection_list:
