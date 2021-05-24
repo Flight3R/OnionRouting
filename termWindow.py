@@ -14,15 +14,15 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class UiMainWindowTerm(object):
     def setup_term_ui(self, _TermWindow, _chosen_device):
         _TermWindow.setObjectName("TermWindow")
-        _TermWindow.resize(1301, 601)
+        _TermWindow.resize(1301, 631)
         self.centralwidget = QtWidgets.QWidget(_TermWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.terminalEntry = QtWidgets.QListWidget(self.centralwidget)
-        self.terminalEntry.setGeometry(QtCore.QRect(0, 30, 1301, 571))
+        self.terminalEntry.setGeometry(QtCore.QRect(0, 0, 1301, 571))
         self.terminalEntry.setStyleSheet("")
         self.terminalEntry.setObjectName("terminalEntry")
         self.terminal = QtWidgets.QLineEdit(self.centralwidget)
-        self.terminal.setGeometry(QtCore.QRect(0, 0, 1301, 31))
+        self.terminal.setGeometry(QtCore.QRect(0, 572, 1301, 31))
         self.terminal.setObjectName("terminal")
         self.terminal.setPlaceholderText("terminal")
         _TermWindow.setCentralWidget(self.centralwidget)

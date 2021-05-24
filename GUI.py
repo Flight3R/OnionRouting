@@ -162,16 +162,16 @@ class UiMainWindow(threading.Thread):
         self.stepButton.setFont(font)
         self.stepButton.setObjectName("stepButton")
         self.terminalEntry = QtWidgets.QListWidget(self.centralwidget)
-        self.terminalEntry.setGeometry(QtCore.QRect(260, 30, 1341, 121))
+        self.terminalEntry.setGeometry(QtCore.QRect(260, 0, 1341, 151))
         self.terminalEntry.setStyleSheet("")
         self.terminalEntry.setObjectName("terminalEntry")
         self.terminal = QtWidgets.QLineEdit(self.centralwidget)
-        self.terminal.setGeometry(QtCore.QRect(260, 0, 1251, 31))
+        self.terminal.setGeometry(QtCore.QRect(260, 152, 1251, 31))
         self.terminal.setObjectName("terminal")
         self.terminal.setPlaceholderText("terminal")
 
         self.terminalWindowButton = QtWidgets.QPushButton(self.centralwidget)
-        self.terminalWindowButton.setGeometry(QtCore.QRect(1510, 0, 91, 31))
+        self.terminalWindowButton.setGeometry(QtCore.QRect(1510, 152, 91, 31))
         self.terminalWindowButton.setMinimumSize(QtCore.QSize(91, 31))
         self.terminalWindowButton.setObjectName("terminalWindowButton")
         main_window.setCentralWidget(self.centralwidget)
@@ -298,7 +298,7 @@ class UiMainWindow(threading.Thread):
                 self.ui.terminalEntry.clear()
             with open(path.join(getcwd(), "logs", "console_" + self.chosen_device.name + ".txt"), "r") as file:
                 data = file.readlines()
-            for line in data[::-1]:
+            for line in data:
                 self.terminalEntry.addItem(line.removesuffix("\n"))
                 if general:
                     self.ui.terminalEntry.addItem(line.removesuffix("\n"))
@@ -306,6 +306,10 @@ class UiMainWindow(threading.Thread):
             pass
         except AttributeError:
             pass
+
+        self.terminalEntry.verticalScrollBar().setValue(self.terminalEntry.verticalScrollBar().maximum())
+        if general:
+            self.ui.terminalEntry.verticalScrollBar().setValue(self.ui.terminalEntry.verticalScrollBar().maximum())
 
     def clicked_terminal_enter_button(self, command_text, general=False):
         self.chosen_device.log_write("console", self.chosen_device.execute_command(command_text))
