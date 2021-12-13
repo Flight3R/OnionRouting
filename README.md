@@ -86,71 +86,71 @@ The implementation of those operations guarantees constant packet size at every 
 
 ## Example of usage
 
-![1](/home/michal/Obrazy/onion/1.png)
+![1](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/1.png)
 
 Figure 1. Computer A specifies the recipient and initializes connection 
 
-![2](/home/michal/Obrazy/onion/2.png)
+![2](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/2.png)
 
 Figure 2. Packets recieved by the first node, NOTE: only the first packet is readable by this node - it contains: next hop address (figure 3), symmetric key and  init. vector.
 
-![3](/home/michal/Obrazy/onion/3.png)
+![3](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/3.png)
 
 Figure 3. Packets recieved by the second node.
 
-![4](/home/michal/Obrazy/onion/4.png)
+![4](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/4.png)
 
 Figure 4. Packets recieved by the third node.
 
-![5](/home/michal/Obrazy/onion/5.png)
+![5](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/5.png)
 
 Figure 5. No message has been send to destination PC so far; its log is yet empty.
 
-![6](/home/michal/Obrazy/onion/6.png)
+![6](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/6.png)
 
 Figure 6. Computer A sends message throuth the initialized tunnel (3 times simmetrically encrypted).
 
-![7](/home/michal/Obrazy/onion/7.png)
+![7](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/7.png)
 
 Figure 7. First node cannot see message content, it only removes it's layer of encryption.
 
-![8](/home/michal/Obrazy/onion/8.png)
+![8](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/8.png)
 
 Figure 8.The second node does the same.
 
-![9](/home/michal/Obrazy/onion/9.png)
+![9](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/9.png)
 
 Figure 9. Third node obtains plain text message by removing last layer of encryption and sends it to destination PC.
 
-![10](/home/michal/Obrazy/onion/10.png)
+![10](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/10.png)
 
 Figure 10. Computer B recieves the message, but from IP address it looks like the third node is the sender.
 
-![11](/home/michal/Obrazy/onion/11.png)
+![11](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/11.png)
 
 Figure 11. Computer B can respond to this message as the tunnel is mantained until max age count is reached. 
 
-![12](/home/michal/Obrazy/onion/12.png)
+![12](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/12.png)
 
 Figure 12. Every node on response's way back adds it's own layer of encryption. 
 
-![13](/home/michal/Obrazy/onion/13.png)
+![13](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/13.png)
 
 Figure 13. As above.
 
-![14](/home/michal/Obrazy/onion/14.png)
+![14](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/14.png)
 
 Figure 14. As above.
 
-![15](/home/michal/Obrazy/onion/15.png)
+![15](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/15.png)
 
 Figure 15. Computer A removes all 3 added layers of encryption and reads the response message.
 
-![16](/home/michal/Obrazy/onion/16.png)
+![16](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/16.png)
 
 Figure 16. When the tunnel is no longer ment to be used, it can be closed; 3 packet destined to the nodes are sent.
 
-![17](/home/michal/Obrazy/onion/17.png)
+![17](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/17.png)
 
 Figure 17. Although finalization packets travel in the same order though the nodes:
 
@@ -160,10 +160,10 @@ Figure 17. Although finalization packets travel in the same order though the nod
 
  it is better to observe their functionality from the end: third node recieves it's finalization packet and flushes the connection.
 
-![18](/home/michal/Obrazy/onion/18.png)
+![18](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/18.png)
 
 Figure 18. The same is done with the connection in the second node (step 2).
 
-![19](/home/michal/Obrazy/onion/19.png)
+![19](https://raw.githubusercontent.com/Flight3R/OnionRouting/master/readme-res/19.png)
 
 Figure 19. Finally the first node recieves the special sequence and the entire tunnel is finalized.
